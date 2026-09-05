@@ -1413,29 +1413,55 @@ def api_discover():
 
 
 def _search_catalog(q, num):
-    """Search the catalogue of the active format(s).
-
-    In both mode, return an interleaved audiobook + ebook result set.
-    """
+    """Search active audiobook and ebook catalogues concurrently."""
+    from concurrent.futures import ThreadPoolExecutor
     from . import ebookmeta
 
     active = formats.active()
 
-    ebooks = []
-    if "ebook" in active:
-        for x in ebookmeta.search(q, num=num):
+    def get_ebooks():
+        out = []
+        try:
+            rows = ebookmeta.search(q, num=num)
+        except Exception as exc:
+            log.warning("ebook catalogue search failed for %r: %s", q, exc)
+            return out
+
+        for x in rows:
             b = dict(x, asin=x.get("id", ""), format="ebook")
             if b["asin"]:
-                ebooks.append(b)
+                out.append(b)
+        return out
 
-    audio = []
-    if "audiobook" in active:
-        for x in audible.search(q, num=num):
+    def get_audio():
+        out = []
+        try:
+            rows = audible.search(q, num=num)
+        except Exception as exc:
+            log.warning("audiobook catalogue search failed for %r: %s", q, exc)
+            return out
+
+        for x in rows:
             if not x.get("asin"):
                 continue
             b = dict(x)
             b["format"] = "audiobook"
-            audio.append(b)
+            out.append(b)
+        return out
+
+    ebooks = []
+    audio = []
+
+    if "ebook" in active and "audiobook" in active:
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            ef = pool.submit(get_ebooks)
+            af = pool.submit(get_audio)
+            ebooks = ef.result()
+            audio = af.result()
+    elif "ebook" in active:
+        ebooks = get_ebooks()
+    elif "audiobook" in active:
+        audio = get_audio()
 
     if active == ["ebook"]:
         return ebooks[:num]

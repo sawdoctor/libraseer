@@ -107,7 +107,6 @@ const Stackarr = (() => {
       applyTheme();
       if (localStorage.getItem("stackarr-nav") === "collapsed") document.body.classList.add("nav-collapsed");
       document.body.classList.add("loaded");
-      this.initSearchSuggest();
       this.fitCovers();
       this.initCovers();
       this.wireStarHover();
@@ -698,6 +697,12 @@ const Stackarr = (() => {
             rhead = document.getElementById("results-head"), sentinel = document.getElementById("scroll-sentinel"),
             discSec = document.getElementById("discover-section");
 
+      // A submitted search should never waste time loading Discover first.
+      if (pre) {
+        if (discSec) discSec.style.display = "none";
+        if (rhead) rhead.hidden = false;
+      }
+
       // endless scroll of the discovery gallery
       let page = 0, loading = false, done = false;
       const seen = new Set();
@@ -750,11 +755,13 @@ const Stackarr = (() => {
           setTimeout(loadMore, 0);
         }
       };
-      if (sentinel && "IntersectionObserver" in window) {
-        new IntersectionObserver((es) => { if (es[0].isIntersecting) loadMore(); },
-          { rootMargin: "600px" }).observe(sentinel);
+      if (!pre) {
+        if (sentinel && "IntersectionObserver" in window) {
+          new IntersectionObserver((es) => { if (es[0].isIntersecting) loadMore(); },
+            { rootMargin: "600px" }).observe(sentinel);
+        }
+        loadMore();
       }
-      loadMore();
 
       // search overrides the gallery
       let timer, seq = 0;
@@ -768,8 +775,6 @@ const Stackarr = (() => {
         Stackarr.fitCovers();
         Stackarr.initFormatFilter();
       };
-      const q = document.getElementById("topsearch");
-      if (q) { q.addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(() => doSearch(q.value.trim()), 350); }); }
       if (pre) doSearch(pre);
     },
   };

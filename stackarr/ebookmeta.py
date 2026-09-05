@@ -231,12 +231,27 @@ def _dedup(books: list[dict]) -> list[dict]:
 
 
 def search(query: str, num: int = 12) -> list[dict]:
-    """Search ebooks. Google Books first (richer metadata + summaries), topped
-    up from Open Library so thin GB results still fill a row."""
-    books = gb_search(query, num)
-    if len(books) < num:
-        books += ol_search(query, num - len(books))
-    return _dedup(books)[:num]
+    """Search Google Books and Open Library concurrently, then deduplicate."""
+    from concurrent.futures import ThreadPoolExecutor
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        gb_future = pool.submit(gb_search, query, num)
+        ol_future = pool.submit(ol_search, query, num)
+
+        try:
+            google = gb_future.result()
+        except Exception as exc:
+            log.warning("Google Books search failed for %r: %s", query, exc)
+            google = []
+
+        try:
+            openlib = ol_future.result()
+        except Exception as exc:
+            log.warning("Open Library search failed for %r: %s", query, exc)
+            openlib = []
+
+    # Prefer Google's richer record when both catalogues contain the same work.
+    return _dedup(google + openlib)[:num]
 
 
 def search_paged(query: str, num: int = 24, offset: int = 0) -> list[dict]:
