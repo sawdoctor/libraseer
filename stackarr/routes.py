@@ -205,9 +205,15 @@ def suggestions_page():
     except Exception:
         recently_added = []
     with db.conn() as c:
-        recent_requests = [dict(r) for r in c.execute(
-            "SELECT title, author, cover, status, asin FROM requests WHERE user_id=? "
-            "ORDER BY id DESC LIMIT 14", (u["id"],))]
+        if u["role"] == "admin":
+            recent_requests = [dict(r) for r in c.execute(
+                "SELECT r.title,r.author,r.cover,r.status,r.asin,r.format,u.username "
+                "FROM requests r JOIN users u ON u.id=r.user_id "
+                "ORDER BY r.id DESC LIMIT 14")]
+        else:
+            recent_requests = [dict(r) for r in c.execute(
+                "SELECT title,author,cover,status,asin,format FROM requests WHERE user_id=? "
+                "ORDER BY id DESC LIMIT 14", (u["id"],))]
         rated_count = c.execute("SELECT COUNT(*) FROM ratings WHERE user_id=?", (u["id"],)).fetchone()[0]
         onboard_off = bool(c.execute(
             "SELECT 1 FROM signals WHERE user_id=? AND kind='onboard_dismissed'", (u["id"],)).fetchone())
@@ -271,7 +277,7 @@ def requests_page():
     wanted = bool(request.args.get("wanted"))            # Sonarr-style: couldn't-grab list
     where = "WHERE status='failed'" if wanted else "WHERE 1=1"
     with db.conn() as c:
-        if admin and request.args.get("all"):
+        if admin:
             rows = [dict(r) for r in c.execute(f"SELECT r.*, u.username FROM requests r "
                     f"JOIN users u ON u.id=r.user_id {where.replace('status','r.status')} ORDER BY r.id DESC LIMIT 200")]
         else:
@@ -1550,15 +1556,94 @@ def api_search():
     q = request.args.get("q", "").strip()
     if not q:
         return jsonify([])
-    books = _search_catalog(q, 12)
-    for b in books:
+
+    def norm(value):
+        return re.sub(r"[^a-z0-9]+", " ", (value or "").casefold()).strip()
+
+    nq = norm(q)
+    words = nq.split()
+    active = set(formats.active())
+
+    # Search the shared server-wide library first. Availability belongs to the
+    # installation, not the account that originally requested the book.
+    with db.conn() as c:
+        library_rows = [dict(r) for r in c.execute(
+            "SELECT item_id,title,author,asin,series,format,source "
+            "FROM library WHERE gone_at IS NULL"
+        )]
+        available_requests = [dict(r) for r in c.execute(
+            "SELECT asin,title,author,cover,format FROM requests "
+            "WHERE status='available' ORDER BY id DESC"
+        )]
+
+    local = []
+    for row in library_rows:
+        if row.get("format") not in active:
+            continue
+
+        haystack = norm(" ".join([
+            row.get("title") or "",
+            row.get("author") or "",
+            row.get("series") or "",
+        ]))
+        if not words or not all(word in haystack for word in words):
+            continue
+
+        book = {
+            "asin": row.get("asin") or "",
+            "title": row.get("title") or "Untitled",
+            "author": row.get("author") or "",
+            "cover": "",
+            "series": row.get("series") or "",
+            "format": row.get("format") or "audiobook",
+            "state": "available",
+        }
+
+        # Kavita can expose filename-style titles with a blank author/ASIN.
+        # Reuse known request metadata when this library item came through
+        # Stackarr, while still supporting books added directly to Kavita/ABS.
+        for req in available_requests:
+            if req.get("format") != book["format"]:
+                continue
+            if not _library_title_match(req.get("title"), row.get("title")):
+                continue
+            if row.get("author") and req.get("author") and not _library_author_match(
+                req.get("author"), row.get("author")
+            ):
+                continue
+            book["asin"] = req.get("asin") or book["asin"]
+            book["title"] = req.get("title") or book["title"]
+            book["author"] = req.get("author") or book["author"]
+            book["cover"] = req.get("cover") or ""
+            break
+
+        local.append(book)
+
+    local.sort(key=lambda b: (
+        0 if norm(b["title"]) == nq else
+        1 if nq in norm(b["title"]) else 2,
+        norm(b["title"])
+    ))
+
+    remote = _search_catalog(q, 12)
+    for b in remote:
         b["state"] = _state_for(
-            b["asin"],
-            b["title"],
-            b["author"],
-            fmt=b.get("format"),
+            b["asin"], b["title"], b["author"], fmt=b.get("format")
         )
-    return jsonify(books)
+
+    # Shared-library matches always come first.
+    out = []
+    seen = set()
+    for b in local + remote:
+        key = (norm(b.get("title")), norm(b.get("author")), b.get("format"))
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(b)
+        if len(out) >= 12:
+            break
+
+    return jsonify(out)
 
 
 def _needs_approval(user) -> bool:
