@@ -4,7 +4,7 @@ about: Something isn't working
 labels: bug
 ---
 
-**Stackarr version** (sidebar / `/api/health`):
+**Libraseer version** (sidebar / `/api/health`):
 **Deployment** (Docker / bare metal), reverse proxy?:
 
 **What happened**
@@ -13,4 +13,4 @@ labels: bug
 
 **Steps to reproduce**
 
-**Relevant logs** (Settings → Logs, or `docker logs stackarr`):
+**Relevant logs** (Settings → Logs, or your container logs):

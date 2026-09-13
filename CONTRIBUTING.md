@@ -1,4 +1,4 @@
-# Contributing to Stackarr
+# Contributing to Libraseer
 
 Thanks for your interest! Stackarr is a small, deterministic (no-AI) audiobook
 recommendation add-on for [Chaptarr](https://chaptarr.com). It was largely
@@ -8,7 +8,7 @@ or harden the code are very welcome.
 ## Dev setup
 
 ```bash
-git clone https://github.com/katalyst88/stackarr && cd stackarr
+git clone https://github.com/sawdoctor/libraseer && cd libraseer
 cp .env.example .env          # fill in Audiobookshelf + Chaptarr details
 pip install -r requirements.txt
 python run.py                 # http://localhost:8484

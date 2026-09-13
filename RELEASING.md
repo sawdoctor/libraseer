@@ -1,4 +1,4 @@
-# Releasing Stackarr
+# Releasing Libraseer
 
 Every release **must** complete this checklist. Docs and the demo are not
 optional polish — they ship with the code, so they are part of the definition of
@@ -24,7 +24,7 @@ done for a release.
    ```
    Pushing the tag triggers the **Publish Docker image** workflow
    (`.github/workflows/docker-publish.yml`), which builds and pushes
-   `ghcr.io/katalyst88/stackarr:X.Y.Z` (and `:latest` on the default branch).
+   `ghcr.io/sawdoctor/libraseer:X.Y.Z` (and `:latest` on the default branch).
 
 ## Definition of done
 
