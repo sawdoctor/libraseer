@@ -282,4 +282,3 @@ class KavitaBackend(Backend):
 
         out.sort(key=lambda x: x["last_update"], reverse=True)
         return out
-

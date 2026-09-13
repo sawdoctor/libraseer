@@ -212,7 +212,7 @@ def reconcile_ebook_acquisitions():
 
 
 def reconcile_audiobook_acquisitions():
-    """Mirror asynchronous ABB/TorBox bridge failures back into Stackarr."""
+    """Mirror asynchronous Shelfmark-TorBox state back into Libraseer."""
     with db.conn() as c:
         rows = [
             dict(r)
@@ -240,9 +240,9 @@ def reconcile_audiobook_acquisitions():
 
         if state in {"needs_review", "failed"}:
             reason = error or (
-                "Audiobook bridge needs manual review"
+                "Audiobook acquisition needs manual review"
                 if state == "needs_review"
-                else "Audiobook bridge failed"
+                else "Shelfmark-TorBox audiobook acquisition failed"
             )
             with db.conn() as c:
                 c.execute(
@@ -252,15 +252,15 @@ def reconcile_audiobook_acquisitions():
                     (reason, row["id"]),
                 )
             log.warning(
-                "audiobook request %s failed in bridge: %s",
+                "audiobook request %s failed in Shelfmark-TorBox: %s",
                 row["id"], reason,
             )
             continue
 
         if state in {"received", "searching", "monitoring"}:
             detail = {
-                "received": "Audiobook bridge accepted the request.",
-                "searching": "Audiobook bridge is searching AudiobookBay.",
+                "received": "Shelfmark-TorBox accepted the audiobook request.",
+                "searching": "Shelfmark-TorBox is searching AudiobookBay.",
                 "monitoring": "Audiobook queued in Shelfmark; monitoring acquisition.",
             }[state]
             with db.conn() as c:

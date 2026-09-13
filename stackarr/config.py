@@ -2,8 +2,8 @@
 deploys anywhere with no code edits. Single source of truth for settings."""
 import os
 
-VERSION = "1.6.8"
-RELEASE_STAGE = "stable"
+VERSION = "0.1.0-alpha.1"
+RELEASE_STAGE = "alpha"
 
 
 def _bool(name: str, default: bool = False) -> bool:
@@ -20,7 +20,7 @@ PORT = int(os.environ.get("STACKARR_PORT", "8484"))
 # Default audiobook so existing deployments are unchanged until flipped.
 FORMATS = os.environ.get("STACKARR_FORMATS", "audiobook").strip().lower()
 DATA_DIR = os.environ.get("STACKARR_DATA", "/config")
-APP_NAME = os.environ.get("STACKARR_NAME", "Stackarr")
+APP_NAME = os.environ.get("STACKARR_NAME", "Libraseer")
 ACCENT = os.environ.get("STACKARR_ACCENT", "#d98c3f")          # amber accent (themeable)
 # Subpath when reverse-proxied / embedded (e.g. "/stackarr"). Blank = root.
 URL_BASE = "/" + os.environ.get("STACKARR_URL_BASE", "").strip("/") if os.environ.get("STACKARR_URL_BASE", "").strip("/") else ""
@@ -68,6 +68,12 @@ OPDS_PASS = os.environ.get("OPDS_PASS", "")
 ABS_EBOOKS = _bool("ABS_EBOOKS", False)
 # KOReader progress-sync (kosync) — Stackarr exposes a /kosync endpoint.
 KOREADER_SYNC = _bool("KOREADER_SYNC", False)
+
+# --- Shelfmark-TorBox audiobook handoff --------------------------------------
+SHELFMARK_AUDIOBOOK_URL = os.environ.get("SHELFMARK_AUDIOBOOK_URL", "").rstrip("/")
+SHELFMARK_AUDIOBOOK_USERNAME = os.environ.get("SHELFMARK_AUDIOBOOK_USERNAME", "")
+SHELFMARK_AUDIOBOOK_PASSWORD = os.environ.get("SHELFMARK_AUDIOBOOK_PASSWORD", "")
+SHELFMARK_AUDIOBOOK_SOURCE = os.environ.get("SHELFMARK_AUDIOBOOK_SOURCE", "audiobookbay").strip().lower()
 
 # --- Shelfmark ebook handoff -------------------------------------------------
 # This branch deliberately sends ONLY ebook requests to a separate Shelfmark.
@@ -152,6 +158,10 @@ def validate() -> list[str]:
         problems.append("ABS_URL and ABS_ADMIN_TOKEN are required")
     if FORMATS in ("ebook", "both") and not SHELFMARK_EBOOK_URL:
         problems.append(
-            "SHELFMARK_EBOOK_URL is required when Stackarr ebook support is enabled"
+            "SHELFMARK_EBOOK_URL is required when Libraseer ebook support is enabled"
+        )
+    if FORMATS in ("audiobook", "both") and not SHELFMARK_AUDIOBOOK_URL:
+        problems.append(
+            "SHELFMARK_AUDIOBOOK_URL is required when Libraseer audiobook support is enabled"
         )
     return problems

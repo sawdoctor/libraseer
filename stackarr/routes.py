@@ -1709,7 +1709,7 @@ def _acquisition_handoff(
     """Single acquisition dispatcher for the controlled migration.
 
     Ebooks go to the separate ebook Shelfmark.
-    Audiobooks through Stackarr remain disabled until the ebook route is proven.
+    Audiobooks go directly to Shelfmark-TorBox through the compatibility adapter.
     """
     fmt = (fmt or "").strip().lower()
 

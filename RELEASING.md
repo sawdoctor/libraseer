@@ -1,32 +1,13 @@
-# Releasing Stackarr
+# Releasing Libraseer
 
-Every release **must** complete this checklist. Docs and the demo are not
-optional polish — they ship with the code, so they are part of the definition of
-done for a release.
+## Release checklist
 
-## Mandatory steps for every release
+1. Update `VERSION` and `RELEASE_STAGE` in `stackarr/config.py`.
+2. Update `README.md`, `RELEASE_NOTES.md`, `CHANGELOG.md`, `.env.example`, and security documentation where relevant.
+3. Confirm the Libraseer validation workflow is green.
+4. Create and push the version tag.
+5. The tag triggers `.github/workflows/release.yml`, which builds and publishes `ghcr.io/sawdoctor/libraseer` for linux/amd64 and linux/arm64.
 
-1. **Bump the version.** Update `VERSION` (and `RELEASE_STAGE` if it changed) in
-   `stackarr/config.py`.
-2. **Update the docs.** Reflect any new/changed behaviour in:
-   - `README.md` (features, config table, quick start)
-   - `CHANGELOG.md` (a dated entry for this version)
-   - `SECURITY.md` / `.env.example` if anything security- or config-related changed.
-3. **Regenerate the demo.** Run `python tools/build_demo.py` and commit the
-   refreshed `docs/` output so the GitHub Pages demo matches the release.
-   - Verify it: serve `docs/` and confirm pages load with no console errors and
-     no broken links (see `tools/build_demo.py` header).
-4. **Commit, tag, push.**
-   ```bash
-   git add -A && git commit -m "vX.Y.Z: <summary>"
-   git tag -a vX.Y.Z -m vX.Y.Z
-   git push && git push --tags
-   ```
-   Pushing the tag triggers the **Publish Docker image** workflow
-   (`.github/workflows/docker-publish.yml`), which builds and pushes
-   `ghcr.io/katalyst88/stackarr:X.Y.Z` (and `:latest` on the default branch).
+The inherited Stackarr generated demo and Android wrapper are intentionally not part of the Libraseer alpha release.
 
-## Definition of done
-
-A release is not done until: version bumped · docs updated · `docs/` demo
-regenerated and committed · tag pushed · CI image published green.
+A release is complete when the version and documentation are correct, validation is green, the tag is pushed, and the container image is published successfully.
