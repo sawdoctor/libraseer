@@ -1,47 +1,49 @@
 # Contributing to Libraseer
 
-Thanks for your interest! Stackarr is a small, deterministic (no-AI) audiobook
-recommendation add-on for [Chaptarr](https://chaptarr.com). It was largely
-**vibecoded** with an AI assistant — so contributions that tighten, simplify,
-or harden the code are very welcome.
+Libraseer is derived from Stackarr and intentionally keeps several internal
+Stackarr names for compatibility. Contributions that fix bugs, improve
+reliability, or simplify the code are welcome.
 
 ## Dev setup
 
-```bash
-git clone https://github.com/sawdoctor/libraseer && cd libraseer
-cp .env.example .env          # fill in Audiobookshelf + Chaptarr details
-pip install -r requirements.txt
-python run.py                 # http://localhost:8484
-```
+Clone the existing repository:
 
-Or with Docker:
+    git clone https://github.com/sawdoctor/stackarr.git
+    cd stackarr
+    cp .env.example .env
+    pip install -r requirements.txt
+    python run.py
 
-```bash
-docker compose up -d --build
-```
+The application listens on port 8484 by default.
+
+The public deployment Compose belongs in the separate Libraseer stack project;
+this repository contains the application source.
 
 ## Project layout
 
-- `stackarr/recommend.py` — the deterministic recommendation engine (the heart).
-- `stackarr/absclient.py` / `audible.py` / `audnexus.py` — data sources.
-- `stackarr/chaptarr.py` — the handoff to Chaptarr.
-- `stackarr/routes.py` — pages + JSON API. `templates/` + `static/` — the UI.
+- `stackarr/recommend.py` — deterministic recommendation engine.
+- `stackarr/absclient.py`, `audible.py`, `audnexus.py` — library and metadata sources.
+- `stackarr/shelfmark.py` — direct ebook Shelfmark handoff.
+- `stackarr/audiobridge.py` — direct Shelfmark-TorBox audiobook handoff; the historical module name is retained for compatibility.
+- `stackarr/routes.py` — pages and JSON API.
+- `stackarr/templates/` and `stackarr/static/` — UI.
 
 ## Guidelines
 
-- **No AI in the recommendation path** — every pick must be a real catalog
-  entry reached by an explainable rule. Keep it deterministic.
-- Match the existing style; keep config env-driven (`stackarr/config.py`).
-- Bump `VERSION` in `config.py` and add a `CHANGELOG.md` entry with your change.
-- Test against a real Audiobookshelf + Chaptarr where you can.
+- Keep recommendations deterministic; there is no AI/model call in the recommendation path.
+- Keep configuration environment-driven through `stackarr/config.py`.
+- Preserve compatibility names unless a deliberate migration is being made.
+- Update version/release documentation when behaviour or configuration changes.
+- Test against the relevant real services where practical.
 
 ## Releasing
 
-Every release must follow [`RELEASING.md`](RELEASING.md). Updating the docs and
-**regenerating the GitHub Pages demo** (`python tools/build_demo.py`, commit
-`docs/`) are mandatory parts of cutting a release, not afterthoughts.
+Follow `RELEASING.md`.
+
+The inherited Stackarr Android wrapper and generated GitHub Pages demo are not
+part of the Libraseer alpha release.
 
 ## Reporting issues
 
-Use the issue templates. Include your Stackarr version (shown in the sidebar /
-`/api/health`), and relevant lines from the in-app **Settings → Logs**.
+Use the issue templates. Include the Libraseer version shown in the sidebar or
+`/api/health`, plus relevant lines from Settings -> Logs or the container logs.
