@@ -4,18 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>{{ app_name }}</title>
-<link rel="manifest" href="{{ url_for('main.manifest') }}">
-<link rel="icon" href="{{ url_for('static', filename='icon.svg') }}" type="image/svg+xml">
+<link rel="manifest" href="{{ url_for('main.manifest') }}?v={{ version }}">
+<link rel="icon" href="{{ url_for('static', filename='icon-192.png') }}" type="image/png">
 <link rel="apple-touch-icon" href="{{ url_for('static', filename='icon-180.png') }}">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="{{ app_name }}">
+<meta name="application-name" content="{{ app_name }}">
 <meta name="theme-color" content="#0b1120">
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v='20260831-ebook-discover-2') }}">
 <style>:root { --accent: {{ accent }}; }</style>
 </head>
 <body>
 <nav class="sidebar">
-  <div class="brand"><img src="{{ url_for('static', filename='icon.svg') }}" alt=""><span>{{ app_name }}</span>
+  <div class="brand"><img src="{{ url_for('static', filename='icon-192.png') }}" alt=""><span>{{ app_name }}</span>
     <button class="nav-collapse" onclick="Stackarr.toggleNav()" title="Collapse / expand menu" aria-label="Collapse or expand menu"></button></div>
   <a href="{{ url_for('main.home_page') }}" class="navlink {{ 'active' if request.path.endswith('/home') or request.path == url_base+'/' }}" title="Home">
     <svg viewBox="0 0 24 24"><path d="M12 3 2 12h3v8h5v-6h4v6h5v-8h3z"/></svg><span>Home</span></a>

@@ -1,6 +1,10 @@
 # Libraseer
 
-> **Alpha:** Libraseer 0.1.0-alpha.3 is intended for experienced self-hosters.
+<p align="center">
+  <img src="stackarr/static/icon.svg" alt="Libraseer logo" width="180">
+</p>
+
+> **Alpha:** Libraseer 0.1.0-alpha.4 is intended for experienced self-hosters.
 > It works on the maintainer's deployment, but the public installation path is new.
 
 Libraseer is a self-hosted discovery and request interface for one combined

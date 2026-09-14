@@ -1,9 +1,11 @@
-# Libraseer 0.1.0-alpha.3
+# Libraseer 0.1.0-alpha.4
 
-Third public alpha.
+Fourth public alpha.
 
-- fixes Kavita library reconciliation for dotted version suffixes such as `v5.0b`, including the real-world `11/22/63` case;
-- retains the alpha.2 reversed-author matching and conservative Dune/Mort false-match protection;
-- requires no database, Docker-network, or configuration migration from alpha.2.
+- replaces the remaining legacy PWA/app icons with Libraseer branding;
+- adds new 180px, 192px and 512px Libraseer PNG icons;
+- makes the PWA manifest identity explicit and forces clean manifest revalidation;
+- adds the Libraseer logo to the project README;
+- contains no acquisition, database, networking or configuration changes.
 
 This remains an alpha for experienced self-hosters.

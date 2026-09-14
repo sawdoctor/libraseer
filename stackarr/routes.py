@@ -2768,15 +2768,16 @@ def manifest():
     body = {
         "name": config.APP_NAME, "short_name": config.APP_NAME,
         "description": "Ebook and audiobook discovery and requests for your self-hosted library",
-        "start_url": f"{base}/", "scope": f"{base}/", "display": "standalone",
+        "id": f"{base}/", "start_url": f"{base}/", "scope": f"{base}/", "display": "standalone",
         "background_color": "#0f172a", "theme_color": "#0f172a",
         "icons": [
-            {"src": f"{base}/static/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any"},
             {"src": f"{base}/static/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
             {"src": f"{base}/static/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"},
         ],
     }
-    return jsonify(body)
+    response = jsonify(body)
+    response.headers["Cache-Control"] = "no-cache"
+    return response
 
 
 @bp.route("/sw.js")
