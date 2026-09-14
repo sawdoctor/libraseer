@@ -12,7 +12,7 @@
 <div class="login-card">
   <img src="{{ url_for('static', filename='icon.svg') }}" alt="" class="login-logo">
   <h1>{{ app_name }}</h1>
-  <p class="tagline">Your next listen, picked from your shelf.</p>
+  <p class="tagline">Your next book, picked from your shelf.</p>
   {% if error %}<p class="error">{{ error }}</p>{% endif %}
 
   {% if first_run %}
@@ -60,7 +60,7 @@
       <button type="submit">Sign up</button>
     </form>
     <p class="hint">Ask the admin for an invite code. Or sign in above with your
-      Audiobookshelf / Kavita / Komga / Calibre-Web account — that links a Stackarr account automatically.</p>
+      Audiobookshelf / Kavita / Komga / Calibre-Web account — that links a Libraseer account automatically.</p>
   </details>
   {% endif %}
 
@@ -74,7 +74,7 @@ function pickMethod(id, btn) {
   document.getElementById('provider-field').value = id;
   document.querySelectorAll('.login-tab').forEach(function(t){ t.classList.toggle('on', t === btn); });
   var h = document.getElementById('method-hint');
-  if (h) h.textContent = id === 'local' ? 'Sign in with your Stackarr password.'
+  if (h) h.textContent = id === 'local' ? 'Sign in with your Libraseer password.'
                                         : 'Sign in with your ' + (METHOD_LABELS[id] || id) + ' account.';
 }
 </script>

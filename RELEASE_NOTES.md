@@ -1,14 +1,12 @@
-# Libraseer 0.1.0-alpha.1
+# Libraseer 0.1.0-alpha.2
 
-First public alpha of the Stackarr-derived combined ebook/audiobook discovery
-and request layer.
+Second public alpha.
 
-Included before publication:
-- df19c5d: ebook acquisition/library matching fixes;
-- 043db9f: combined book-search responsiveness;
-- bcc4d02: shared library availability across users;
-- direct Shelfmark-TorBox audiobook handoff, removing the unpublished bridge.
+- fixes ebook library reconciliation when Kavita filenames reverse author order;
+- prevents unsafe one-word ebook matches such as Dune -> Dune Messiah;
+- prevents Mort -> Mort Castle - Strangers false matches;
+- completes the visible Stackarr -> Libraseer WebUI branding;
+- adds a Libraseer WebUI/favicon logo;
+- retains internal stackarr/, Stackarr JavaScript, database and STACKARR_* compatibility names.
 
-The maintainer's live workflow is proven. A completely fresh third-party
-Compose install has not yet been independently verified; this is explicitly an
-alpha for experienced self-hosters.
+This remains an alpha for experienced self-hosters.

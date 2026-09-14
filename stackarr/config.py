@@ -2,7 +2,7 @@
 deploys anywhere with no code edits. Single source of truth for settings."""
 import os
 
-VERSION = "0.1.0-alpha.1"
+VERSION = "0.1.0-alpha.2"
 RELEASE_STAGE = "alpha"
 
 
@@ -20,7 +20,8 @@ PORT = int(os.environ.get("STACKARR_PORT", "8484"))
 # Default audiobook so existing deployments are unchanged until flipped.
 FORMATS = os.environ.get("STACKARR_FORMATS", "audiobook").strip().lower()
 DATA_DIR = os.environ.get("STACKARR_DATA", "/config")
-APP_NAME = os.environ.get("STACKARR_NAME", "Libraseer")
+_legacy_app_name = os.environ.get("STACKARR_NAME", "").strip()
+APP_NAME = "Libraseer" if not _legacy_app_name or _legacy_app_name.casefold() == "stackarr" else _legacy_app_name
 ACCENT = os.environ.get("STACKARR_ACCENT", "#d98c3f")          # amber accent (themeable)
 # Subpath when reverse-proxied / embedded (e.g. "/stackarr"). Blank = root.
 URL_BASE = "/" + os.environ.get("STACKARR_URL_BASE", "").strip("/") if os.environ.get("STACKARR_URL_BASE", "").strip("/") else ""

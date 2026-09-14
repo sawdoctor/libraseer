@@ -1,6 +1,6 @@
 # Libraseer
 
-> **Alpha:** Libraseer 0.1.0-alpha.1 is intended for experienced self-hosters.
+> **Alpha:** Libraseer 0.1.0-alpha.2 is intended for experienced self-hosters.
 > It works on the maintainer's deployment, but the public installation path is new.
 
 Libraseer is a self-hosted discovery and request interface for one combined

@@ -59,7 +59,7 @@
 
       <div class="panel"><h3>Linked sign-in methods</h3>
         <p class="muted">Link a library account so you can sign in with it — it always maps back to this
-          one Stackarr account. Linking also lets {{ app_name }} read that library for you.</p>
+          one Libraseer account. Linking also lets {{ app_name }} read that library for you.</p>
         {% if account.providers %}
         {% for p in account.providers %}
         <div class="row"><span>{{ p.label }}{% if p.linked %} <span class="chip available">linked</span>{% endif %}</span>
@@ -95,7 +95,7 @@
       </div>
       {% if is_admin %}
       <div class="panel"><h3>Auto-add to Shelfmark</h3>
-        <p class="muted">Let Stackarr hand high-confidence picks to Shelfmark automatically, with no manual approval.
+        <p class="muted">Let Libraseer hand high-confidence picks to Shelfmark automatically, with no manual approval.
           Off by default. It skips books you already own, caps how many it adds per cycle, and pauses if Shelfmark can't add right now.</p>
         <label class="row"><span>Auto-approval level</span>
           <select onchange="Stackarr.setSetting({auto_add_level: this.value})">
@@ -127,7 +127,7 @@
       </div>
       {% endif %}
       <div class="panel"><h3>I've already read…</h3>
-        <p class="muted">Tell Stackarr a book you've read so it shapes your suggestions — no download.</p>
+        <p class="muted">Tell Libraseer a book you've read so it shapes your suggestions — no download.</p>
         <div class="inline-form">
           <input id="mr-title" placeholder="Title">
           <input id="mr-author" placeholder="Author (optional)">
@@ -169,9 +169,9 @@
         <div class="conn-actions"><button class="btn small ghost" onclick="Stackarr.testConn('chaptarr', this)">Test</button>
           <span class="conn-result" id="test-chaptarr"></span></div>
         <p class="muted" style="margin-top:12px">Optional — real-time status: in <b>Shelfmark → Settings → Connect → + → Webhook</b>,
-          set the URL below (triggers: On Grab, On Import). Stackarr then flips requests to Available the moment Shelfmark imports them.</p>
+          set the URL below (triggers: On Grab, On Import). Libraseer then flips requests to Available the moment Shelfmark imports them.</p>
         <label class="row"><span>Webhook URL</span><input readonly onclick="this.select()"
-          value="{{ (conn.public_url or 'http://YOUR-STACKARR-HOST:8484') }}/api/webhook/chaptarr?token={{ conn.chaptarr_webhook_token }}"></label>
+          value="{{ (conn.public_url or 'http://YOUR-LIBRASEER-HOST:8484') }}/api/webhook/chaptarr?token={{ conn.chaptarr_webhook_token }}"></label>
       </div>
 
       {% if show_ebook %}
@@ -189,7 +189,7 @@
         <label class="row"><span>Username</span><input data-setting="calibreweb_user" value="{{ conn.calibreweb_user }}"></label>
         <label class="row"><span>Password</span><input type="password" data-setting="calibreweb_pass" value="{{ conn.calibreweb_pass }}"></label>
         <p class="warn-note">⚠️ Calibre-Web only exposes a basic read/unread flag for its one configured account —
-          not true per-user reading progress. Stackarr leans on Kavita or Audiobookshelf for what you've actually finished.</p>
+          not true per-user reading progress. Libraseer leans on Kavita or Audiobookshelf for what you've actually finished.</p>
         <div class="conn-actions"><button class="btn small ghost" onclick="Stackarr.testConn('calibreweb', this)">Test</button>
           <span class="conn-result" id="test-calibreweb"></span></div>
       </div>
@@ -237,7 +237,7 @@
           automatically. Admins and <b>trusted</b> users always skip approval.</p>
       </div>
       <div class="panel"><h3>Import users</h3>
-        <p class="muted">Pull accounts from your connected sources (Audiobookshelf) in as linked Stackarr
+        <p class="muted">Pull accounts from your connected sources (Audiobookshelf) in as linked Libraseer
           accounts — they can then sign in with their existing credentials. New users are also
           provisioned automatically the first time they sign in.</p>
         <div class="inline-form">
@@ -371,7 +371,7 @@
     <div class="settings-cat" id="cat-about">
       <div class="panel"><h3>About</h3>
         <p class="muted">{{ app_name }} v{{ version }} · {{ stage }}</p>
-        <p class="muted">An audiobook recommendation add-on for Shelfmark. Vibecoded.</p>
+        <p class="muted">A self-hosted ebook and audiobook discovery and request interface.</p>
       </div>
     </div>
 
