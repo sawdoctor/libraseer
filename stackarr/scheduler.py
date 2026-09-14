@@ -452,13 +452,13 @@ def refresh_library():
 
             req = clean(request_title)
             lib = clean(library_title)
-            authors = [
-                clean(a)
-                for a in re.split(r"\s*,\s*", request_author or "")
-                if clean(a)
+            author_tokens = [
+                token
+                for token in clean(request_author).split()
+                if len(token) >= 3
             ]
 
-            if not req or not lib or not authors:
+            if not req or not lib or not author_tokens:
                 return False
 
             pos = lib.find(req)
@@ -467,8 +467,15 @@ def refresh_library():
 
             prefix = lib[:pos].strip()
 
-            # At least one requested author must be present before the title.
-            if not any(a in prefix for a in authors):
+            # Kavita filenames often invert author order, e.g.
+            # "King Stephen - 11-22-63". Match meaningful author tokens
+            # irrespective of order while still requiring author evidence.
+            prefix_tokens = set(prefix.split())
+            unique_author_tokens = set(author_tokens)
+            required = 1 if len(unique_author_tokens) == 1 else 2
+            if sum(
+                1 for token in unique_author_tokens if token in prefix_tokens
+            ) < required:
                 return False
 
             rest = lib[pos:].strip()

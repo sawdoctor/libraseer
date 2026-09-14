@@ -359,6 +359,33 @@ def _score_release(release: dict[str, Any], title: str, author: str) -> int | No
     if fmt not in {"epub", "pdf"}:
         return None
 
+    # One-word titles are collision-prone: "Dune" must not accept
+    # "Dune Messiah", and "Mort" must not accept "Mort Castle - Strangers".
+    # For these requests, after removing the requested title, author, and
+    # ordinary edition/format metadata, any substantive extra word makes the
+    # release unsafe to auto-grab. Prefer a false negative to the wrong book.
+    author_words = [
+        word for word in _norm(author).split()
+        if len(word) >= 2
+    ]
+    if len(wanted_title.split()) == 1:
+        metadata_words = {
+            "retail", "epub", "ebook", "pdf", "edition", "unabridged",
+            "revised", "updated", "uk", "us", "novel", "book", "volume",
+            "vol", "anniversary", "deluxe", "illustrated", "version", "by",
+        }
+        allowed_words = set(wanted_title.split()) | set(author_words) | metadata_words
+        extra_words = [
+            word for word in release_title.split()
+            if len(word) >= 2
+            and not word.isdigit()
+            and not re.fullmatch(r"(19|20)\d\d", word)
+            and not re.fullmatch(r"v\d+(?:\d+)?", word)
+            and word not in allowed_words
+        ]
+        if extra_words:
+            return None
+
     score = 100 - suspicious_prefix_penalty - suspicious_suffix_penalty
 
     if release_title == wanted_title:
