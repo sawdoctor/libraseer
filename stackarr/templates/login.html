@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{ app_name }} — sign in</title>
-<link rel="icon" href="{{ url_for('static', filename='icon.svg') }}" type="image/svg+xml">
+<link rel="icon" href="{{ url_for('static', filename='icon-192.png') }}" type="image/svg+xml">
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 <style>:root { --accent: {{ accent }}; }</style>
 </head>
 <body class="login-body">
 <div class="login-card">
-  <img src="{{ url_for('static', filename='icon.svg') }}" alt="" class="login-logo">
+  <img src="{{ url_for('static', filename='icon-192.png') }}" alt="" class="login-logo">
   <h1>{{ app_name }}</h1>
   <p class="tagline">Your next book, picked from your shelf.</p>
   {% if error %}<p class="error">{{ error }}</p>{% endif %}
