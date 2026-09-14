@@ -489,7 +489,8 @@ def refresh_library():
             return bool(tail) and all(
                 t in {"epub","ebook","pdf","retail","edition"}
                 or re.fullmatch(r"(19|20)\d\d", t)
-                or re.fullmatch(r"v\d+(?:\d+)?", t)
+                or re.fullmatch(r"v\d+[a-z]?", t)
+                or (re.fullmatch(r"\d+[a-z][a-z0-9]*", t) and any(re.fullmatch(r"v\d+[a-z]?", x) for x in tail))
                 for t in tail
             )
 

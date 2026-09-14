@@ -1,12 +1,9 @@
-# Libraseer 0.1.0-alpha.2
+# Libraseer 0.1.0-alpha.3
 
-Second public alpha.
+Third public alpha.
 
-- fixes ebook library reconciliation when Kavita filenames reverse author order;
-- prevents unsafe one-word ebook matches such as Dune -> Dune Messiah;
-- prevents Mort -> Mort Castle - Strangers false matches;
-- completes the visible Stackarr -> Libraseer WebUI branding;
-- adds a Libraseer WebUI/favicon logo;
-- retains internal stackarr/, Stackarr JavaScript, database and STACKARR_* compatibility names.
+- fixes Kavita library reconciliation for dotted version suffixes such as `v5.0b`, including the real-world `11/22/63` case;
+- retains the alpha.2 reversed-author matching and conservative Dune/Mort false-match protection;
+- requires no database, Docker-network, or configuration migration from alpha.2.
 
 This remains an alpha for experienced self-hosters.
