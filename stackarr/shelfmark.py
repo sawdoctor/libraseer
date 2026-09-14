@@ -141,7 +141,7 @@ def health() -> list[dict[str, str]]:
 
 def _session() -> requests.Session:
     if not configured():
-        raise ShelfmarkError("Stackarr isn't connected to the ebook Shelfmark yet.")
+        raise ShelfmarkError("Libraseer isn't connected to the ebook Shelfmark yet.")
 
     user = username().strip()
     secret = password()

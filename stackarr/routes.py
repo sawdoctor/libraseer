@@ -426,7 +426,7 @@ def insights_page():
     if top_moods:
         facts.append(("🎭", top_moods[0][0], "your most-read mood"))
     if req_avail:
-        facts.append(("📚", f"{req_avail}", "books added via Stackarr"))
+        facts.append(("📚", f"{req_avail}", "books added via Libraseer"))
     top_authors = sorted(authors.items(), key=lambda x: x[1], reverse=True)[:10]
     return render_template("insights.html", total=len(hist), finished=finished, in_progress=in_prog,
                            hours=hours, req_avail=req_avail, facts=facts, top_authors=top_authors,
@@ -2767,7 +2767,7 @@ def manifest():
     base = config.URL_BASE or ""
     body = {
         "name": config.APP_NAME, "short_name": config.APP_NAME,
-        "description": "Audiobook recommendations from your listening history",
+        "description": "Ebook and audiobook discovery and requests for your self-hosted library",
         "start_url": f"{base}/", "scope": f"{base}/", "display": "standalone",
         "background_color": "#0f172a", "theme_color": "#0f172a",
         "icons": [
