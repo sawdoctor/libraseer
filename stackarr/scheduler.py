@@ -2,8 +2,10 @@
 deletions -> negative taste signals), flips requests to 'available' when
 they appear in the library, runs the per-user recommender on its interval,
 and sends digests. Survives individual failures; daemon thread."""
+import html
 import json
 import logging
+import re
 import threading
 import time
 
@@ -12,6 +14,16 @@ from . import absclient, audiobridge, backends, config, db, formats, notify, rec
 log = logging.getLogger("stackarr.scheduler")
 
 _EBOOK_RETRY_POLL_SECONDS = 60
+
+_RELEASE_METADATA_WORDS = {
+    "retail", "epub", "ebook", "pdf", "edition", "unabridged",
+    "revised", "updated", "anniversary", "deluxe", "illustrated", "version",
+}
+_PUBLISHER_TAIL_WORDS = {
+    "books", "press", "publishing", "publisher", "publishers",
+    "classics", "editions", "house",
+}
+_FORMAT_MARKERS = {"epub", "ebook", "pdf"}
 
 
 def _parse_attempted_refs(raw):
@@ -29,6 +41,173 @@ def _parse_attempted_refs(raw):
         if ref and ref not in out:
             out.append(ref)
     return out
+
+
+def _clean_match_text(value: str) -> str:
+    return re.sub(
+        r"[^a-z0-9]+",
+        " ",
+        html.unescape(value or "").casefold(),
+    ).strip()
+
+
+def _filename_fields(value: str) -> list[str]:
+    return [
+        field.strip()
+        for field in re.split(
+            r"\s+(?:-|–|—|\|)\s+",
+            html.unescape(value or ""),
+        )
+        if field.strip()
+    ]
+
+
+def _metadata_words(words: list[str]) -> bool:
+    if not words:
+        return False
+
+    return all(
+        word in _RELEASE_METADATA_WORDS
+        or word.isdigit()
+        or re.fullmatch(r"(19|20)\d\d", word)
+        or re.fullmatch(r"\d+(st|nd|rd|th)", word)
+        or re.fullmatch(r"v\d+[a-z]?", word)
+        for word in words
+    )
+
+
+def _title_field_matches(request_title: str, field: str) -> bool:
+    """Match a complete filename field without relaxing short-title safety."""
+    wanted = _clean_match_text(request_title)
+    if not wanted:
+        return False
+
+    if _clean_match_text(field) == wanted:
+        return True
+
+    # Kavita often preserves publisher / release parentheticals in the filename:
+    #   A Wrinkle in Time (Puffin) (retail)
+    # Strip them only when the base field is the exact requested title and the
+    # suffix has explicit release metadata. Short collision-prone titles remain
+    # stricter: every parenthetical must itself be metadata.
+    match = re.match(r"^(.*?)((?:\s*\([^()]+\))+?)\s*$", field.strip())
+    if not match or _clean_match_text(match.group(1)) != wanted:
+        return False
+
+    groups = [
+        _clean_match_text(group).split()
+        for group in re.findall(r"\(([^()]+)\)", match.group(2))
+    ]
+    if not groups:
+        return False
+
+    metadata = [_metadata_words(words) for words in groups]
+
+    if len(wanted.split()) <= 3:
+        return all(metadata)
+
+    # Longer titles may have one publisher/imprint parenthetical alongside an
+    # explicit release marker such as (retail). Unknown multi-word suffixes are
+    # rejected unless they look like a publisher field.
+    if not any(metadata):
+        return False
+
+    for words, is_metadata in zip(groups, metadata):
+        if is_metadata:
+            continue
+        if len(words) == 1:
+            continue
+        if words and words[-1] in _PUBLISHER_TAIL_WORDS:
+            continue
+        return False
+
+    return True
+
+
+def _kavita_filename_match(
+    request_title: str,
+    request_author: str,
+    library_title: str,
+) -> bool:
+    """Conservatively match a request against Kavita's filename-style title.
+
+    The requested title must occupy a complete separator-delimited field, and
+    the requested author must be strongly represented somewhere in the filename.
+    This accepts real shapes such as:
+
+      Masterworks - [SF Masterworks 071] - Dune - Frank Herbert
+      Madeleine L'Engle - [Time 01] - A Wrinkle in Time (Puffin) (retail)
+
+    while rejecting related works such as Dune Messiah and Dune Encyclopedia.
+    """
+    fields = _filename_fields(library_title)
+    wanted = _clean_match_text(request_title)
+    if not wanted or not fields:
+        return False
+
+    title_positions = [
+        index
+        for index, field in enumerate(fields)
+        if _title_field_matches(request_title, field)
+    ]
+    if not title_positions:
+        return False
+
+    author_tokens = [
+        token
+        for token in _clean_match_text(request_author).split()
+        if len(token) >= 2
+    ]
+    if not author_tokens:
+        return False
+
+    all_tokens = set(_clean_match_text(library_title).split())
+    if not all(token in all_tokens for token in author_tokens):
+        return False
+
+    author_positions = []
+    for index, field in enumerate(fields):
+        field_tokens = set(_clean_match_text(field).split())
+        if all(token in field_tokens for token in author_tokens):
+            author_positions.append(index)
+
+    if not author_positions:
+        return False
+
+    title_index = title_positions[0]
+
+    # Inspect every filename field after the exact title until an explicit file
+    # format marker. Author fields and ordinary publisher metadata are harmless;
+    # another substantive field means this is probably a different work.
+    for index in range(title_index + 1, len(fields)):
+        words = _clean_match_text(fields[index]).split()
+        if not words:
+            continue
+
+        field_tokens = set(words)
+        if all(token in field_tokens for token in author_tokens):
+            continue
+
+        format_positions = [
+            pos for pos, word in enumerate(words)
+            if word in _FORMAT_MARKERS
+        ]
+        stop_after = bool(format_positions)
+        if format_positions:
+            words = words[:min(format_positions)]
+
+        if words:
+            if _metadata_words(words):
+                pass
+            elif words[-1] in _PUBLISHER_TAIL_WORDS:
+                pass
+            else:
+                return False
+
+        if stop_after:
+            break
+
+    return True
 
 
 def reconcile_ebook_acquisitions():
@@ -391,8 +570,6 @@ def refresh_library():
         # requests -> available when their book shows up
         newly_available = []
 
-        import re
-
         def title_match(request_title, library_title):
             req = re.sub(r"\s+", " ", (request_title or "").strip().lower())
             lib = re.sub(r"\s+", " ", (library_title or "").strip().lower())
@@ -442,58 +619,6 @@ def refresh_library():
             lib = re.sub(r"[^a-z0-9]", "", (library_author or "").split(",")[0].lower())
             return bool(req and lib and (req in lib or lib in req))
 
-        def kavita_filename_match(request_title, request_author, library_title):
-            """Match Kavita filename-derived titles conservatively."""
-            import html
-
-            clean = lambda x: re.sub(
-                r"[^a-z0-9]+", " ", html.unescape(x or "").lower()
-            ).strip()
-
-            req = clean(request_title)
-            lib = clean(library_title)
-            author_tokens = [
-                token
-                for token in clean(request_author).split()
-                if len(token) >= 3
-            ]
-
-            if not req or not lib or not author_tokens:
-                return False
-
-            pos = lib.find(req)
-            if pos <= 0:
-                return False
-
-            prefix = lib[:pos].strip()
-
-            # Kavita filenames often invert author order, e.g.
-            # "King Stephen - 11-22-63". Match meaningful author tokens
-            # irrespective of order while still requiring author evidence.
-            prefix_tokens = set(prefix.split())
-            unique_author_tokens = set(author_tokens)
-            required = 1 if len(unique_author_tokens) == 1 else 2
-            if sum(
-                1 for token in unique_author_tokens if token in prefix_tokens
-            ) < required:
-                return False
-
-            rest = lib[pos:].strip()
-            if rest == req:
-                return True
-
-            if not rest.startswith(req + " "):
-                return False
-
-            tail = rest[len(req):].strip().split()
-            return bool(tail) and all(
-                t in {"epub","ebook","pdf","retail","edition"}
-                or re.fullmatch(r"(19|20)\d\d", t)
-                or re.fullmatch(r"v\d+[a-z]?", t)
-                or (re.fullmatch(r"\d+[a-z][a-z0-9]*", t) and any(re.fullmatch(r"v\d+[a-z]?", x) for x in tail))
-                for t in tail
-            )
-
         for r in c.execute("SELECT id,user_id,title,author,cover,format FROM requests WHERE status IN ('queued','handed','failed')"):
             candidates = c.execute(
                 "SELECT title,author,source FROM library "
@@ -515,7 +640,7 @@ def refresh_library():
                 kavita_filename = (
                     (item["source"] or "").lower() == "kavita"
                     and not (item["author"] or "").strip()
-                    and kavita_filename_match(
+                    and _kavita_filename_match(
                         r["title"], r["author"], item["title"]
                     )
                 )
@@ -683,7 +808,7 @@ def new_release_radar():
                 continue
             b.setdefault("format", fmt)
             try:
-                notify.new_release(b, base_url=base)
+                notify.new_release(b, base_url=db.get_meta("public_url", ""))
                 db.set_meta(key, str(today))     # mark done only AFTER a successful notify,
                 log.info("new-release radar: %s — %s", b.get("title"), author)  # else a transient
             except Exception as e:               # failure would suppress the alert forever
