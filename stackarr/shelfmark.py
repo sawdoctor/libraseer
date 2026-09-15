@@ -261,19 +261,36 @@ def _release_format(release: dict[str, Any]) -> str:
 
 
 def _score_release(release: dict[str, Any], title: str, author: str) -> int | None:
+    import html
+
     raw_release_title = str(release.get("title") or "")
-    release_title = _norm(raw_release_title)
+    raw_unescaped = html.unescape(raw_release_title)
+    release_title = _norm(raw_unescaped)
     wanted_title = _norm(title)
-    if not wanted_title or wanted_title not in release_title:
+
+    release_words = release_title.split()
+    wanted_words = wanted_title.split()
+
+    if not wanted_words:
+        return None
+
+    def find_sequence(haystack: list[str], needle: list[str]) -> list[int]:
+        if not needle or len(needle) > len(haystack):
+            return []
+        width = len(needle)
+        return [
+            i
+            for i in range(len(haystack) - width + 1)
+            if haystack[i:i + width] == needle
+        ]
+
+    title_positions = find_sequence(release_words, wanted_words)
+    if not title_positions:
         return None
 
     # Do not mistake a requested title used only as a numbered series label
     # for the actual book title, e.g.
     # "Tich Brewster - [Angels & Demons 01] - Devada".
-    import html
-
-    raw_unescaped = html.unescape(raw_release_title)
-
     for bracket in re.finditer(r"\[([^\]]+)\]|\(([^)]+)\)", raw_unescaped):
         bracket_key = _norm(bracket.group(1) or bracket.group(2))
 
@@ -285,8 +302,6 @@ def _score_release(release: dict[str, Any], title: str, author: str) -> int | No
 
         after = _norm(raw_unescaped[bracket.end():])
 
-        # "[Series 01] - Requested Title" is fine. A different substantive
-        # title after the series marker means this is another work.
         if after.startswith(wanted_title):
             continue
 
@@ -295,59 +310,10 @@ def _score_release(release: dict[str, Any], title: str, author: str) -> int | No
             word for word in after.split()
             if word not in metadata and not word.isdigit()
         ]
-
         if meaningful:
             return None
 
-    # Reject a different work whose title merely contains the requested title
-    # later in the release name, e.g.
-    # "Neil Gaiman - Don't Panic - Douglas Adams - The Hitchhiker's Guide..."
-    pos = release_title.find(wanted_title)
-    prefix = release_title[:pos].strip()
-
-    suspicious_prefix_penalty = 0
-
-    if prefix:
-        allowed = set(wanted_title.split())
-        allowed.update(_norm(author).split())
-        allowed.update({
-            "hugo", "winner", "nominee", "award", "novel", "book",
-            "retail", "epub", "ebook", "edition", "uk", "us",
-        })
-
-        unexplained = [
-            word for word in prefix.split()
-            if len(word) >= 3
-            and not word.isdigit()
-            and word not in allowed
-        ]
-
-        if len(unexplained) >= 2:
-            suspicious_prefix_penalty = min(60, len(unexplained) * 15)
-
-    # Also penalize substantial extra title text after the requested title.
-    # This catches combined/multi-book releases without rejecting messy names.
-    suffix = release_title[pos + len(wanted_title):].strip()
-    suspicious_suffix_penalty = 0
-
-    if suffix:
-        allowed_suffix = set(_norm(author).split())
-        allowed_suffix.update({
-            "retail", "epub", "ebook", "pdf", "edition",
-            "unabridged", "revised", "updated", "uk", "us",
-        })
-
-        unexplained_suffix = [
-            word for word in suffix.split()
-            if len(word) >= 3
-            and not word.isdigit()
-            and word not in allowed_suffix
-        ]
-
-        if len(unexplained_suffix) >= 3:
-            suspicious_suffix_penalty = min(60, len(unexplained_suffix) * 12)
-
-    if explicit_foreign_language(str(release.get("title") or ""), title):
+    if explicit_foreign_language(raw_unescaped, title):
         return None
 
     if str(release.get("source") or "").strip().lower() != source():
@@ -355,54 +321,71 @@ def _score_release(release: dict[str, Any], title: str, author: str) -> int | No
     if str(release.get("protocol") or "").strip().lower() != "nzb":
         return None
 
+    # Never let contradictory upstream metadata turn an obvious audiobook
+    # release into an ebook candidate.
+    audio_markers = {
+        "mp3", "m4b", "m4a", "aac", "audiobook", "audible",
+    }
+    if any(word in audio_markers for word in release_words):
+        return None
+
     fmt = _release_format(release)
     if fmt not in {"epub", "pdf"}:
         return None
 
-    # One-word titles are collision-prone: "Dune" must not accept
-    # "Dune Messiah", and "Mort" must not accept "Mort Castle - Strangers".
-    # For these requests, after removing the requested title, author, and
-    # ordinary edition/format metadata, any substantive extra word makes the
-    # release unsafe to auto-grab. Prefer a false negative to the wrong book.
+    # Split only on deliberate release-field separators. Do not split colons:
+    # "The Bell Jar: A Biography" must remain one title-like field.
+    segments = [
+        _norm(part)
+        for part in re.split(r"\s+(?:-|–|—|\|)\s+|\|", raw_unescaped)
+        if _norm(part)
+    ]
+    exact_title_segment = wanted_title in segments
+
     author_words = [
         word for word in _norm(author).split()
         if len(word) >= 2
     ]
-    if len(wanted_title.split()) == 1:
-        metadata_words = {
-            "retail", "epub", "ebook", "pdf", "edition", "unabridged",
-            "revised", "updated", "uk", "us", "novel", "book", "volume",
-            "vol", "anniversary", "deluxe", "illustrated", "version", "by",
-        }
-        allowed_words = set(wanted_title.split()) | set(author_words) | metadata_words
-        extra_words = [
-            word for word in release_title.split()
-            if len(word) >= 2
-            and not word.isdigit()
-            and not re.fullmatch(r"(19|20)\d\d", word)
-            and not re.fullmatch(r"v\d+(?:\d+)?", word)
-            and word not in allowed_words
-        ]
-        if extra_words:
-            return None
+    full_author_positions = find_sequence(release_words, author_words)
+    surname_present = bool(author_words and author_words[-1] in release_words)
+    author_present = bool(full_author_positions or surname_present)
 
-    score = 100 - suspicious_prefix_penalty - suspicious_suffix_penalty
+    format_markers = {"epub", "ebook", "pdf", "mobi", "azw", "azw3"}
+    metadata_words = {
+        # File/source metadata.
+        "retail", "epub", "ebook", "pdf", "mobi", "azw", "azw3",
+        "kindle", "ocr", "scan", "scanned", "converted", "conversion",
+        "fixed", "proof", "arc",
+        # Edition metadata.
+        "edition", "unabridged", "revised", "updated", "expanded",
+        "anniversary", "deluxe", "illustrated", "special",
+        "international", "reprint", "complete", "uncut",
+        # Structural metadata.
+        "novel", "book", "volume", "vol", "version", "by",
+        # Locale/language metadata that is not itself a foreign marker.
+        "uk", "us", "eng", "english",
+        # Connectors useful in legitimate edition text.
+        "a", "an", "and", "the", "of", "for", "in", "on", "with",
+        "to", "from",
+    }
 
-    if release_title == wanted_title:
-        score += 80
-    elif release_title.startswith(wanted_title + " "):
-        score += 45
+    def harmless(word: str) -> bool:
+        return (
+            word in metadata_words
+            or word.isdigit()
+            or bool(re.fullmatch(r"(?:18|19|20)\d\d", word))
+            or bool(re.fullmatch(r"v\d+(?:\d+)?", word))
+            or bool(re.fullmatch(r"\d+(?:st|nd|rd|th)", word))
+        )
 
-    author_words = [word for word in _norm(author).split() if len(word) >= 3]
-    if author_words:
-        matched = sum(1 for word in author_words if word in release_title.split())
-        score += matched * 8
+    first_format = next(
+        (i for i, word in enumerate(release_words) if word in format_markers),
+        len(release_words),
+    )
+    core_words = release_words[:first_format]
 
-    if fmt == "epub":
-        score += 30
-    else:
-        score += 10
-
+    # A pack/omnibus must never substitute for a single requested work unless
+    # the requested title itself explicitly contains the same pack wording.
     pack_terms = (
         "box set",
         "boxset",
@@ -414,9 +397,230 @@ def _score_release(release: dict[str, Any], title: str, author: str) -> int | No
         "books 1 4",
         "books 1 5",
     )
-    if any(term in release_title for term in pack_terms):
-        score -= 120
+    if any(
+        term in release_title and term not in wanted_title
+        for term in pack_terms
+    ):
+        return None
 
+    short_title = len(wanted_words) <= 3
+
+    if short_title:
+        release_word_set = set(release_words)
+
+        # Short titles need a stronger author identity check. A surname match
+        # alone is unsafe: Brian Herbert must not satisfy Frank Herbert.
+        strong_author_present = False
+
+        if author_words:
+            if len(author_words) == 1:
+                strong_author_present = author_words[0] in release_word_set
+            else:
+                all_author_words_present = all(
+                    word in release_word_set
+                    for word in author_words
+                )
+                surname_present = author_words[-1] in release_word_set
+                first_initial_present = (
+                    bool(author_words[0])
+                    and author_words[0][0] in release_word_set
+                )
+                strong_author_present = (
+                    all_author_words_present
+                    or (surname_present and first_initial_present)
+                )
+
+                # A shared surname with a conflicting/missing given-name anchor
+                # is especially dangerous for short titles.
+                if surname_present and not strong_author_present:
+                    return None
+
+        if exact_title_segment:
+            title_segment_index = segments.index(wanted_title)
+            segment_words = [segment.split() for segment in segments]
+
+            format_segment_positions = [
+                i
+                for i, words in enumerate(segment_words)
+                if any(word in format_markers for word in words)
+                and i > title_segment_index
+            ]
+
+            if format_segment_positions:
+                last_segment = min(format_segment_positions)
+            else:
+                last_segment = len(segment_words) - 1
+
+            publisher_tail_words = {
+                "books", "press", "publishing", "publisher",
+                "publishers", "classics", "editions", "house",
+            }
+
+            substantive: list[str] = []
+
+            for i in range(title_segment_index + 1, last_segment + 1):
+                words = list(segment_words[i])
+
+                # A format token may share a segment with bad title text:
+                # "Dune Encyclopedia (pdf)" must inspect "Dune Encyclopedia"
+                # rather than treating the whole segment as format metadata.
+                marker_positions = [
+                    n
+                    for n, word in enumerate(words)
+                    if word in format_markers
+                ]
+                if marker_positions:
+                    words = words[:min(marker_positions)]
+
+                if not words:
+                    continue
+
+                words = [
+                    word
+                    for word in words
+                    if word not in set(author_words)
+                ]
+
+                if len(author_words) >= 2 and author_words[0]:
+                    initial = author_words[0][0]
+                    words = [
+                        word
+                        for word in words
+                        if word != initial
+                    ]
+
+                if not words:
+                    continue
+
+                # Common publisher/imprint fields are legitimate noise.
+                if words[-1] in publisher_tail_words:
+                    continue
+
+                substantive.extend(
+                    word
+                    for word in words
+                    if len(word) >= 2
+                    and not harmless(word)
+                )
+
+            if substantive:
+                return None
+
+            # A bare exact short title at the start ("Dune - EPUB") can be
+            # useful even without author metadata. If the title occurs later,
+            # require a convincing author anchor.
+            if (
+                author_words
+                and not strong_author_present
+                and title_segment_index != 0
+            ):
+                return None
+
+        else:
+            # No cleanly-delimited exact title: short titles require a strong
+            # author anchor and no unexplained bibliographic words.
+            if author_words and not strong_author_present:
+                return None
+
+            remaining = list(core_words)
+            core_title_positions = find_sequence(remaining, wanted_words)
+            if not core_title_positions:
+                return None
+
+            pos = core_title_positions[0]
+            del remaining[pos:pos + len(wanted_words)]
+
+            if author_words:
+                author_pos = find_sequence(remaining, author_words)
+
+                if author_pos:
+                    apos = author_pos[0]
+                    del remaining[apos:apos + len(author_words)]
+                else:
+                    remaining = [
+                        word
+                        for word in remaining
+                        if word not in set(author_words)
+                    ]
+
+                if len(author_words) >= 2 and author_words[0]:
+                    initial = author_words[0][0]
+                    remaining = [
+                        word
+                        for word in remaining
+                        if word != initial
+                    ]
+
+            substantive = [
+                word
+                for word in remaining
+                if len(word) >= 2
+                and not harmless(word)
+            ]
+
+            if substantive:
+                return None
+
+    # Longer titles remain tolerant. Extra text is penalised rather than
+    # automatically rejected unless one of the hard safety rules above fired.
+    suspicious_prefix_penalty = 0
+    suspicious_suffix_penalty = 0
+
+    if not exact_title_segment:
+        title_pos = title_positions[0]
+        prefix_words = release_words[:title_pos]
+        suffix_words = release_words[title_pos + len(wanted_words):]
+
+        prefix_allowed = set(wanted_words) | set(author_words) | metadata_words
+        unexplained_prefix = [
+            word
+            for word in prefix_words
+            if len(word) >= 3
+            and not word.isdigit()
+            and word not in prefix_allowed
+        ]
+        if len(unexplained_prefix) >= 2:
+            suspicious_prefix_penalty = min(
+                60,
+                len(unexplained_prefix) * 15,
+            )
+
+        suffix_allowed = set(author_words) | metadata_words
+        unexplained_suffix = [
+            word
+            for word in suffix_words
+            if len(word) >= 3
+            and not word.isdigit()
+            and word not in suffix_allowed
+        ]
+        if len(unexplained_suffix) >= 3:
+            suspicious_suffix_penalty = min(
+                60,
+                len(unexplained_suffix) * 12,
+            )
+
+    score = 100 - suspicious_prefix_penalty - suspicious_suffix_penalty
+
+    if release_title == wanted_title:
+        score += 90
+    elif exact_title_segment:
+        score += 70
+    elif title_positions[0] == 0:
+        score += 45
+    else:
+        score += 20
+
+    matched_author_words = [
+        word
+        for word in author_words
+        if word in release_words
+    ]
+    score += len(matched_author_words) * 8
+
+    if author_words and not author_present:
+        score -= 30
+
+    score += 30 if fmt == "epub" else 10
     return score
 
 
