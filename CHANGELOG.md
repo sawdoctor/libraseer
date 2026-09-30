@@ -9,12 +9,18 @@ inherited Stackarr baseline.
   prefix, including Red Dwarf TV soundtracks, to be selected for the novel.
 - Match the entire work title and author before ranking audio formats; accept
   catalogue subtitle aliases and releases listing only one matching coauthor.
+- Recognise the verified joint pen name Grant Naylor for Rob Grant and Doug
+  Naylor; never infer contributor aliases from arbitrary shared surnames.
+- Extend ebook identity matching to validated distinctive subtitles and
+  numbered series labels while retaining single-book NZB EPUB/PDF checks.
 - Reuse cached metadata, with at most one validated Audible ASIN lookup on a
   cache miss; keep one Shelfmark search with expansion disabled.
 - Report cancelled audiobook downloads explicitly and preserve available
   download error messages.
 - Added regression coverage for work collisions, subtitle/author metadata,
   protocol/language/format rules, and single-search/single-queue handoff.
+- Test the captured nine audiobook and 53 ebook Red Dwarf candidates, selecting
+  only the requested novel in supported formats.
 
 ## [0.1.0-alpha.7] - 2026-09-30
 

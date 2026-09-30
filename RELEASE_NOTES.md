@@ -14,6 +14,10 @@ nothing and explains why.
   can identify the requested work under an alternate release title;
 - separate coauthor names, initials, HTML punctuation and common file/edition
   labels are handled without requiring every coauthor to be listed;
+- the verified joint pen name Grant Naylor identifies Rob Grant and Doug Naylor;
+- ebook matching recognises distinctive catalogue subtitles paired with
+  numbered series labels, accepting the novel's EPUB without accepting its
+  sequels, collections, MOBI/HTML files or releases with no known EPUB/PDF format;
 - cancelled downloads are identified as cancelled; available download error
   messages are preserved.
 
@@ -21,6 +25,8 @@ nothing and explains why.
 
 - cached public catalogue metadata is reused. A cache miss for a valid requested
   ASIN may make one Audible product lookup; it does not run another indexer search;
+- ebook requests may also resolve their existing Google Books/Open Library
+  ID. Returned identity, title and author must agree before a subtitle is used;
 - each handoff still makes one Shelfmark release search with
   `expand_search=false`, followed by at most one download submission;
 - the regression suite checks Red Dwarf collisions and the actual handoff,
@@ -31,8 +37,8 @@ nothing and explains why.
 - update Libraseer only; both Shelfmark services and their configuration can
   remain unchanged. No database migration is required;
 - source/protocol rules and the manual-only Prowlarr fallback remain unchanged;
-- this fix does not resolve ebook candidates rejected by ebook matching, ebook
-  activity API timeouts, ABS listening-history authentication, or TorBox/WebDAV
+- this fix does not resolve ebook activity API timeouts, ABS listening-history
+  authentication, or TorBox/WebDAV
   files that remain invisible after TorBox reports readiness;
 - confirm one correct audiobook reaches the library after deployment. A passing
   matcher test is not proof of a completed live download;
