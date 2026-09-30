@@ -7,13 +7,15 @@ os.environ.setdefault("STACKARR_NO_SCHED", "true")
 
 from flask import Flask
 
-from stackarr import db, routes
+from stackarr import config, db, routes
 
 
 class Alpha7RouteTests(unittest.TestCase):
     def setUp(self):
         self._tmp = tempfile.TemporaryDirectory()
         self._original_db_path = db.DB_PATH
+        self._original_data_dir = config.DATA_DIR
+        config.DATA_DIR = self._tmp.name
         db.DB_PATH = os.path.join(self._tmp.name, "test.db")
         db.init()
         with db.conn() as connection:
@@ -33,6 +35,7 @@ class Alpha7RouteTests(unittest.TestCase):
 
     def tearDown(self):
         db.DB_PATH = self._original_db_path
+        config.DATA_DIR = self._original_data_dir
         routes._LAST_HEAVY.clear()
         self._tmp.cleanup()
 
