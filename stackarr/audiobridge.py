@@ -5,13 +5,15 @@ do not need invasive changes. There is no bridge service.
 """
 from __future__ import annotations
 
+import html
 import logging
 import re
+import unicodedata
 from typing import Any
 
 import requests
 
-from . import config, db
+from . import audible, catalog_cache, config, db
 
 log = logging.getLogger("stackarr.audiobridge")
 _SEARCH_TIMEOUT = 180
@@ -100,7 +102,106 @@ def _session() -> requests.Session:
 
 
 def _norm(value: str) -> str:
-    return re.sub(r"[^a-z0-9]+", " ", (value or "").lower()).strip()
+    value = unicodedata.normalize("NFKD", html.unescape(value or "").casefold())
+    value = "".join(ch for ch in value if not unicodedata.combining(ch))
+    return re.sub(r"[^a-z0-9]+", " ", value).strip()
+
+
+def _author_names(value: str) -> list[str]:
+    # A release may list only one of a book's coauthors. Keep people separate
+    # rather than treating "Rob Grant, Doug Naylor" as one four-word name.
+    return [name for part in re.split(r",|;|&|\band\b", html.unescape(value or ""), flags=re.I)
+            if (name := _norm(part))]
+
+
+def _name_variants(name: str) -> set[str]:
+    words = name.split()
+    variants = {name}
+    if len(words) >= 2:
+        variants.add(" ".join([words[0][0], *words[1:]]))
+        if all(len(word) == 1 for word in words[:-1]):
+            variants.add("".join(words[:-1]) + " " + words[-1])
+    return variants
+
+
+def _author_matches(wanted: str, evidence: str) -> bool:
+    evidence = " " + _norm(evidence) + " "
+    return any(" " + variant + " " in evidence
+               for name in _author_names(wanted) for variant in _name_variants(name))
+
+
+def _wanted_titles(title: str, subtitle: str = "") -> set[str]:
+    keys = {_norm(title)}
+    sub = _norm(subtitle)
+    if sub and sub not in keys:
+        keys.add(_norm(title + " " + subtitle))
+        # Distinctive catalogue subtitles sometimes serve as the release title.
+        # Generic labels such as "A Novel" must never become standalone aliases.
+        if len(sub.split()) >= 3 and not sub.startswith(("a novel", "book ", "the complete")):
+            keys.add(sub)
+    return keys - {""}
+
+
+_TITLE_METADATA = _AUDIO_FORMATS | {
+    "unabridged", "abridged", "audiobook", "audio", "retail", "audible", "eng", "english",
+}
+
+
+def _release_title_key(value: str, wanted: set[str], contributors: str) -> str:
+    """Remove explicit file/edition metadata, then compare the entire work title.
+
+    Extra bibliographic words stay significant: "Titan", "Better Than Life",
+    "Series V to VIII", and "BBC TV Soundtracks" cannot disappear in scoring.
+    """
+    value = html.unescape(value)
+    protected = set(" ".join(wanted).split())
+
+    def strip_note(match):
+        text = _norm(match.group(0))
+        words = text.split()
+        if text in wanted:
+            return match.group(0)
+        technical = _TITLE_METADATA | {"kbps", "khz", "bit", "stereo", "mono"}
+        if words and all(word in technical or word.isdigit() for word in words):
+            return " "
+        return match.group(0)
+
+    value = re.sub(r"\([^()]*\)|\[[^\[\]]*\]", strip_note, value)
+    # A suffix attached directly to a file format is an upload-group label.
+    value = re.sub(r"\b(mp3|m4b|m4a|aac|flac|ogg|opus)-(\w+)\b", r"\1", value, flags=re.I)
+    value = re.sub(r"\b\d+\s*(?:kbps|khz)\b", " ", value, flags=re.I)
+    key = _norm(value)
+    for name in _author_names(contributors):
+        for variant in sorted(_name_variants(name), key=len, reverse=True):
+            if any(variant in title for title in wanted):
+                continue
+            key = re.sub(r"(?<!\w)" + re.escape(variant) + r"(?!\w)", " ", key)
+    key = re.sub(r"\b(?:read by|narrated by)\b", " ", key)
+    words = [word for word in key.split() if word not in (_TITLE_METADATA - protected)]
+    while words and words[0] in {"by", "and"} and words[0] not in protected:
+        words.pop(0)
+    while words and words[-1] in {"by", "and"} and words[-1] not in protected:
+        words.pop()
+    return " ".join(words)
+
+
+def _catalog_identity(title: str, author: str, asin: str) -> dict:
+    """Reuse public metadata; retries after restart may need one ASIN lookup.
+
+    This never performs an indexer search or substitutes a catalogue search hit
+    for the requested work. Stale or conflicting metadata cannot add aliases.
+    """
+    if not re.fullmatch(r"[A-Z0-9]{10}", asin or "", flags=re.I):
+        return {}
+    metadata = catalog_cache.get_item(asin)
+    if metadata is None:
+        metadata = audible.by_asin(asin) or {}
+    if (_norm(metadata.get("title", "")) != _norm(title)
+            or (metadata.get("asin") and metadata["asin"] != asin)
+            or (author and not _author_matches(author, metadata.get("author", "")))):
+        return {}
+    catalog_cache.remember([dict(metadata, asin=asin, format="audiobook")])
+    return metadata
 
 
 def _format_hints(release: dict[str, Any]) -> set[str]:
@@ -125,6 +226,9 @@ def _score_release(
     title: str,
     author: str,
     source_name: str | None = None,
+    *,
+    subtitle: str = "",
+    narrator: str = "",
 ) -> int | None:
     selected_source = (source_name or source()).strip().lower()
     if str(release.get("source") or "").strip().lower() != selected_source:
@@ -143,24 +247,26 @@ def _score_release(
     extra = release.get("extra")
     raw_title = str(extra.get("title_raw") or release_title) if isinstance(extra, dict) else release_title
 
-    wanted = _norm(title)
-    got = _norm(raw_title)
-    if not wanted or wanted not in got:
-        return None
-
     hints = _format_hints(release)
+    if hints & {"epub", "pdf", "mobi", "azw", "azw3"}:
+        return None
     explicit_format = str(release.get("format") or "").strip().lower()
     if explicit_format and not (hints & _AUDIO_FORMATS):
         return None
 
-    score = 100
-    if _norm(release_title) == wanted:
-        score += 50
-    elif _norm(release_title).startswith(wanted + " "):
-        score += 25
+    release_author = str((extra.get("author") if isinstance(extra, dict) else None)
+                         or release.get("author") or "")
+    if author and not _author_matches(author, release_author or raw_title):
+        return None
+    wanted = _wanted_titles(title, subtitle)
+    contributors = ", ".join([author, release_author, narrator])
+    key = _release_title_key(raw_title, wanted, contributors)
+    if not wanted or key not in wanted:
+        return None
 
-    for word in (w for w in _norm(author).split() if len(w) >= 3):
-        if word in got.split():
+    score = 150
+    for name in _author_names(author):
+        if _author_matches(name, release_author or raw_title):
             score += 8
 
     if "m4b" in hints:
@@ -168,9 +274,7 @@ def _score_release(
     elif "mp3" in hints:
         score += 6
 
-    if any(x in got for x in ("complete series", "complete collection", "box set", "boxset", "omnibus")):
-        score -= 120
-    return score if score >= 0 else None
+    return score
 
 
 def _choose_release(
@@ -178,12 +282,16 @@ def _choose_release(
     title: str,
     author: str,
     source_name: str | None = None,
+    *,
+    subtitle: str = "",
+    narrator: str = "",
 ):
     ranked = []
     for idx, release in enumerate(releases):
         if not isinstance(release, dict):
             continue
-        score = _score_release(release, title, author, source_name=source_name)
+        score = _score_release(release, title, author, source_name=source_name,
+                               subtitle=subtitle, narrator=narrator)
         if score is not None:
             ranked.append((score, -idx, release))
     if not ranked:
@@ -316,9 +424,12 @@ def job_status(ref: str) -> dict | None:
         return None
 
     state = str(item.get("state") or "").strip().lower()
-    message = str(item.get("status_message") or item.get("error") or "").strip()
+    message = str(item.get("last_error_message") or item.get("status_message")
+                  or item.get("error") or "").strip()
     if state in {"error", "failed", "cancelled"}:
-        return {"status": "failed", "error": message or "Shelfmark-TorBox download failed."}
+        fallback = ("Shelfmark-TorBox cancelled this download. Check its activity/logs for the reason."
+                    if state == "cancelled" else "Shelfmark-TorBox download failed.")
+        return {"status": "failed", "error": message or fallback}
     if state in {"complete", "completed"}:
         return {"status": "complete", "error": ""}
     return {"status": "monitoring", "error": ""}
@@ -330,7 +441,6 @@ def add_and_search(
     asin: str = "",
     source_name: str | None = None,
 ) -> dict:
-    del asin  # direct Shelfmark handoff does not require an Audible ASIN.
     title = (title or "").strip()
     author = (author or "").strip()
     if not title:
@@ -338,17 +448,21 @@ def add_and_search(
 
     try:
         session = _session()
+        metadata = _catalog_identity(title, author, asin)
         selected_source = (source_name or source()).strip().lower()
         releases = _search_once(session, title, author, source_name=selected_source)
         chosen, candidates = _choose_release(
-            releases, title, author, source_name=selected_source
+            releases, title, author, source_name=selected_source,
+            subtitle=metadata.get("subtitle") or "",
+            narrator=metadata.get("narrator") or "",
         )
         if chosen is None:
             return {
                 "ok": False,
                 "detail": (
                     f"Shelfmark-TorBox found {len(releases)} release(s), but none passed "
-                    f"the conservative single-audiobook {selected_source} checks. Nothing was queued."
+                    f"the requested book's title/author and single-audiobook {selected_source} "
+                    "checks. Related books and recordings are not substitutes. Nothing was queued."
                 ),
             }
 
