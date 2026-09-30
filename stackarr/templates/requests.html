@@ -49,7 +49,12 @@
     </div>
     <span class="badge badge-{{ r.status }}">{{ {'queued':'Requested','handed':'Requested','available':'Available','failed':'Failed','pending_approval':'Awaiting approval','denied':'Not approved'}.get(r.status, r.status) }}</span>
     <div class="req-actions">
-      {% if r.status == 'failed' %}<button class="btn small" onclick="Stackarr.retry({{ r.id }})">Retry</button>{% endif %}
+      {% if r.status == 'failed' %}
+      <button class="btn small" onclick="Stackarr.retry({{ r.id }})">Retry</button>
+      {% if (r.format or 'audiobook') == 'audiobook' %}
+      <button class="btn small ghost" onclick="Stackarr.tryProwlarr({{ r.id }}, this)" title="Run one explicit Prowlarr/Usenet search">Try Prowlarr / Usenet</button>
+      {% endif %}
+      {% endif %}
       <button class="btn small ghost" onclick="Stackarr.removeRequest({{ r.id }})">Remove</button>
     </div>
   </div>

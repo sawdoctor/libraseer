@@ -9,7 +9,7 @@ reliability, or simplify the code are welcome.
 Clone the existing repository:
 
     git clone https://github.com/sawdoctor/libraseer.git
-    cd stackarr
+    cd libraseer
     cp .env.example .env
     pip install -r requirements.txt
     python run.py

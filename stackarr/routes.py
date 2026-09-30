@@ -7,7 +7,7 @@ import re
 from flask import (Blueprint, jsonify, redirect, render_template, request,
                    session, url_for)
 
-from . import (absclient, audiobridge, audible, audnexus, auth, chaptarr, config, db,
+from . import (absclient, audiobridge, audible, audnexus, auth, catalog_cache, chaptarr, config, db,
                discover, ebookmeta, formats, notify, recommend, shelfmark, tagging)
 
 log = logging.getLogger("stackarr.routes")
@@ -700,7 +700,15 @@ def taste_page():
 def book_page(asin):
     # ebook ids are "gb:…"/"ol:…" and resolve via the ebook catalogue; real
     # audiobook ASINs go to Audible + Audnexus as before.
-    if asin.startswith(("gb:", "ol:", "hc:")):
+    cached_catalogue = catalog_cache.get_item(asin) or {}
+    if cached_catalogue.get("title"):
+        b = cached_catalogue
+        b.setdefault("asin", asin)
+        b.setdefault(
+            "format",
+            "ebook" if asin.startswith(("gb:", "ol:", "hc:")) else "audiobook",
+        )
+    elif asin.startswith(("gb:", "ol:", "hc:")):
         from . import ebookmeta
         b = ebookmeta.by_id(asin) or {}
         b["format"] = "ebook"
@@ -1189,13 +1197,18 @@ def settings_page():
     # the ABS admin token / SMTP password to a non-admin who curls /settings.
     conn = {"abs_url": g("abs_url", config.ABS_URL),
             "abs_admin_token": g("abs_admin_token", config.ABS_ADMIN_TOKEN),
-            "chaptarr_url": g("chaptarr_url", config.CHAPTARR_URL),
-            "chaptarr_api_key": g("chaptarr_api_key", config.CHAPTARR_API_KEY),
-            "chaptarr_root_folder": g("chaptarr_root_folder", config.CHAPTARR_ROOT_FOLDER),
-            "chaptarr_quality_profile_id": g("chaptarr_quality_profile_id", str(config.CHAPTARR_QUALITY_PROFILE_ID)),
-            "chaptarr_metadata_profile_id": g("chaptarr_metadata_profile_id", str(config.CHAPTARR_METADATA_PROFILE_ID)),
-            "chaptarr_webhook_token": db.get_meta("chaptarr_webhook_token") or _ensure_webhook_token(),
-            "public_url": db.get_meta("public_url", ""),
+            "shelfmark_ebook_url": g("shelfmark_ebook_url", config.SHELFMARK_EBOOK_URL),
+            "shelfmark_ebook_username": g("shelfmark_ebook_username", config.SHELFMARK_EBOOK_USERNAME),
+            "shelfmark_ebook_password": g("shelfmark_ebook_password", config.SHELFMARK_EBOOK_PASSWORD),
+            "shelfmark_ebook_source": g("shelfmark_ebook_source", config.SHELFMARK_EBOOK_SOURCE),
+            "shelfmark_audiobook_url": g("shelfmark_audiobook_url", config.SHELFMARK_AUDIOBOOK_URL),
+            "shelfmark_audiobook_username": g("shelfmark_audiobook_username", config.SHELFMARK_AUDIOBOOK_USERNAME),
+            "shelfmark_audiobook_password": g("shelfmark_audiobook_password", config.SHELFMARK_AUDIOBOOK_PASSWORD),
+            "shelfmark_audiobook_source": g("shelfmark_audiobook_source", config.SHELFMARK_AUDIOBOOK_SOURCE),
+            "shelfmark_audiobook_fallback_source": g(
+                "shelfmark_audiobook_fallback_source",
+                config.SHELFMARK_AUDIOBOOK_FALLBACK_SOURCE,
+            ),
             "kavita_url": g("kavita_url", config.KAVITA_URL),
             "kavita_api_key": g("kavita_api_key", config.KAVITA_API_KEY),
             "calibreweb_url": g("calibreweb_url", config.CALIBREWEB_URL),
@@ -1424,6 +1437,9 @@ def _search_catalog(q, num):
     from . import ebookmeta
 
     active = formats.active()
+    cached = catalog_cache.get_query(q, active, num)
+    if cached is not None:
+        return cached
 
     def get_ebooks():
         out = []
@@ -1470,10 +1486,14 @@ def _search_catalog(q, num):
         audio = get_audio()
 
     if active == ["ebook"]:
-        return ebooks[:num]
+        out = ebooks[:num]
+        catalog_cache.set_query(q, active, num, out)
+        return out
 
     if active == ["audiobook"]:
-        return audio[:num]
+        out = audio[:num]
+        catalog_cache.set_query(q, active, num, out)
+        return out
 
     out = []
     total = max(len(audio), len(ebooks))
@@ -1486,19 +1506,65 @@ def _search_catalog(q, num):
         if len(out) >= num:
             break
 
-    return out[:num]
+    out = out[:num]
+    catalog_cache.set_query(q, active, num, out)
+    return out
 
 
 @bp.route("/api/suggest")
 @auth.login_required
 def api_suggest():
-    """Typeahead for the top search box — titles/authors/series as you type."""
+    """Fast typeahead from local library/history plus prior catalogue results.
+
+    It deliberately performs no network search. External catalogues are queried
+    only after the user submits the full search.
+    """
     q = request.args.get("q", "").strip()
     if len(q) < 2:
         return jsonify([])
-    return jsonify([{"asin": x["asin"], "title": x["title"], "author": x["author"],
-                     "series": x.get("series", ""), "cover": x["cover"]}
-                    for x in _search_catalog(q, 7)])
+
+    norm = lambda value: re.sub(r"[^a-z0-9]+", " ", (value or "").casefold()).strip()
+    words = norm(q).split()
+    active = formats.active()
+    with db.conn() as c:
+        rows = [dict(row) for row in c.execute(
+            "SELECT asin,title,author,'' AS cover,series,format FROM library "
+            "WHERE gone_at IS NULL AND asin<>'' "
+            "UNION ALL "
+            "SELECT asin,title,author,cover,'' AS series,format FROM requests WHERE asin<>'' "
+            "ORDER BY title LIMIT 300"
+        )]
+
+    candidates = []
+    for item in rows:
+        if item.get("format") not in active:
+            continue
+        haystack = norm(" ".join(str(item.get(k) or "") for k in ("title", "author", "series")))
+        if all(word in haystack for word in words):
+            candidates.append(item)
+    candidates.extend(catalog_cache.suggest(q, active, limit=14))
+    candidates.sort(key=lambda item: (
+        0 if norm(item.get("title")) == norm(q) else
+        1 if norm(q) in norm(item.get("title")) else 2,
+        norm(item.get("title")),
+    ))
+
+    out, seen = [], set()
+    for item in candidates:
+        identity = str(item.get("asin") or "")
+        if not identity or identity in seen:
+            continue
+        seen.add(identity)
+        out.append({
+            "asin": identity,
+            "title": item.get("title") or "Untitled",
+            "author": item.get("author") or "",
+            "series": item.get("series") or "",
+            "cover": item.get("cover") or "",
+        })
+        if len(out) >= 7:
+            break
+    return jsonify(out)
 
 
 @bp.route("/api/ignore", methods=["POST"])
@@ -1705,6 +1771,7 @@ def _acquisition_handoff(
     asin="",
     fmt="audiobook",
     excluded_refs=None,
+    audiobook_source=None,
 ):
     """Single acquisition dispatcher for the controlled migration.
 
@@ -1727,6 +1794,7 @@ def _acquisition_handoff(
             title,
             author,
             asin,
+            source_name=audiobook_source,
         )
 
     return {
@@ -2238,6 +2306,52 @@ def api_retry(rid):
     return jsonify(_hand_off_request(u["id"], row, row["source"]))
 
 
+@bp.route("/api/request/<int:rid>/prowlarr-fallback", methods=["POST"])
+@auth.login_required
+def api_audiobook_prowlarr_fallback(rid):
+    """One explicit Prowlarr/Usenet attempt for a failed audiobook request.
+
+    This is deliberately never called automatically: Prowlarr/indexer allowance
+    is spent only after a person presses the fallback button.
+    """
+    u = auth.current_user()
+    with db.conn() as c:
+        found = c.execute("SELECT * FROM requests WHERE id=?", (rid,)).fetchone()
+        if not found:
+            return jsonify({"error": "not found"}), 404
+        row = dict(found)
+        if u["role"] != "admin" and row["user_id"] != u["id"]:
+            return jsonify({"error": "not found"}), 404
+        if row["status"] != "failed" or row.get("format") != "audiobook":
+            return jsonify({"error": "Only failed audiobook requests can use this fallback."}), 400
+
+    wait = _cooldown(f"audiobook_fallback_{rid}", 30)
+    if wait:
+        return jsonify({
+            "ok": False,
+            "detail": f"That fallback was just tried — wait {wait}s before trying again.",
+        }), 429
+
+    fallback = audiobridge.fallback_source()
+    res = _acquisition_handoff(
+        row["title"],
+        row.get("author", ""),
+        row.get("asin", ""),
+        fmt="audiobook",
+        audiobook_source=fallback,
+    )
+    status = "handed" if res.get("ok") else "failed"
+    ref = str(res.get("ref") or "").strip()
+    detail = str(res.get("detail") or "")
+    with db.conn() as c:
+        c.execute(
+            "UPDATE requests SET status=?,detail=?,chaptarr_ref=?,"
+            "updated_at=datetime('now','localtime') WHERE id=?",
+            (status, detail, ref, rid),
+        )
+    return jsonify(res)
+
+
 @bp.route("/api/request/<int:rid>", methods=["DELETE"])
 @auth.login_required
 def api_request_delete(rid):
@@ -2389,6 +2503,11 @@ SETTING_KEYS = {
     "email_theme", "language", "email_frequency", "suggest_interval_hours",
     "smtp_host", "smtp_port", "smtp_user", "smtp_pass", "smtp_from", "smtp_to",
     "abs_url", "abs_admin_token",
+    "shelfmark_ebook_url", "shelfmark_ebook_username", "shelfmark_ebook_password",
+    "shelfmark_ebook_source", "shelfmark_audiobook_url",
+    "shelfmark_audiobook_username", "shelfmark_audiobook_password",
+    "shelfmark_audiobook_source", "shelfmark_audiobook_fallback_source",
+    # Retain old keys for upgrades; they are no longer shown as active connections.
     "chaptarr_url", "chaptarr_api_key", "chaptarr_root_folder",
     "chaptarr_quality_profile_id", "chaptarr_metadata_profile_id",
     "goodreads_rss", "hardcover_token", "discord_webhook", "custom_webhook",
@@ -2490,17 +2609,19 @@ def api_test(service):
         db.set_meta(k, v)
     try:
         try:
-            if service == "chaptarr":
-                import requests as rq
-                r = rq.get(f"{chaptarr.url()}/api/v1/system/status",
-                           headers={"X-Api-Key": chaptarr.api_key()}, timeout=15)
-                if not r.ok:
-                    return jsonify({"ok": False, "detail": f"HTTP {r.status_code}"})
-                warns = chaptarr.health()
-                msg = "Connected"
-                if warns:
-                    msg += " — heads up: " + "; ".join(w["message"][:80] for w in warns[:2])
-                return jsonify({"ok": True, "detail": msg, "warnings": warns})
+            if service in {"shelfmark_ebook", "shelfmark_audiobook"}:
+                warnings = (
+                    shelfmark.health()
+                    if service == "shelfmark_ebook"
+                    else audiobridge.health()
+                )
+                if warnings:
+                    return jsonify({
+                        "ok": False,
+                        "detail": "; ".join(w["message"] for w in warnings[:2]),
+                        "warnings": warnings,
+                    })
+                return jsonify({"ok": True, "detail": "Connected"})
             # every library source backend (abs / kavita / calibreweb) self-tests
             from . import backends
             b = backends.by_id(service)
