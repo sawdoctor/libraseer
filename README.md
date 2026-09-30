@@ -4,7 +4,7 @@
   <img src="stackarr/static/icon.svg" alt="Libraseer logo" width="180">
 </p>
 
-> **Alpha:** Libraseer `v0.1.0-alpha.7` is for experienced self-hosters. Back
+> **Alpha:** Libraseer `v0.1.0-alpha.8` is for experienced self-hosters. Back
 > up its `/config` volume and read the limitations before exposing it to users.
 
 Libraseer is a self-hosted discovery and request interface for a combined eBook
@@ -27,7 +27,17 @@ the derivative history reviewable.
 Audiobookshelf, Kavita, Prowlarr, SABnzbd, and TorBox are integrations you run
 yourself. Libraseer does not conceal an unpublished bridge or bundled indexer.
 
-## Alpha 7 highlights
+## Alpha 8 highlights
+
+- audiobook acquisition matches the whole requested work and its author before
+  ranking formats; a shared title prefix cannot substitute a sequel, collection,
+  or TV soundtrack;
+- catalogue subtitles identify alternate release titles, with cached metadata
+  reused and at most one ASIN lookup when needed;
+- separate coauthor names and common file/edition labels are supported;
+- cancelled Shelfmark downloads are reported explicitly.
+
+Alpha 7 also added:
 
 - fast typeahead from local/cached catalogue data, with external metadata APIs
   contacted only after a full search is submitted;
@@ -101,6 +111,8 @@ public-alpha gate.
 ## Alpha limitations
 
 - release matching is intentionally conservative and queues one release;
+- if release metadata cannot identify the requested audiobook confidently,
+  nothing is queued; this update does not repair WebDAV mount visibility;
 - the Prowlarr audiobook fallback is manual, not automatic;
 - a process restart clears the harmless in-memory metadata cache;
 - internal `STACKARR_*` names remain for compatibility;

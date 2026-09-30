@@ -1,6 +1,6 @@
 services:
   libraseer:
-    image: ${LIBRASEER_IMAGE:-ghcr.io/sawdoctor/libraseer:v0.1.0-alpha.7}
+    image: ${LIBRASEER_IMAGE:-ghcr.io/sawdoctor/libraseer:v0.1.0-alpha.8}
     restart: unless-stopped
     env_file:
       - .env

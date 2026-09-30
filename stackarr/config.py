@@ -2,7 +2,7 @@
 deploys anywhere with no code edits. Single source of truth for settings."""
 import os
 
-VERSION = "0.1.0-alpha.7"
+VERSION = "0.1.0-alpha.8"
 RELEASE_STAGE = "alpha"
 
 

@@ -1,35 +1,42 @@
-# Libraseer 0.1.0-alpha.7
+# Libraseer 0.1.0-alpha.8
 
-Alpha 7 makes the public installation path clearer and reduces avoidable
-external API traffic.
+Alpha 8 fixes audiobook work selection. Previously, requesting `Red Dwarf`
+could queue `Red Dwarf: Series V to VIII` because a partial title match earned
+enough author/format points. Libraseer now checks the whole work title and
+author before ranking formats. If no release matches confidently, it queues
+nothing and explains why.
 
-## Added
+## Fixed
 
-- local/cached search suggestions that never trigger an external catalogue call;
-- a 15-minute catalogue search cache and 24-hour item metadata cache;
-- separate eBook Shelfmark and audiobook Shelfmark-TorBox connection settings
-  and connection tests;
-- a user-triggered **Try Prowlarr / Usenet** action for failed audiobook
-  requests, protected by a short cooldown;
-- portable Docker Compose, configuration, and release-checklist documentation.
+- sequels, collections and TV recordings cannot qualify through a shared title
+  prefix when a different book was requested;
+- distinctive catalogue subtitles, such as `Infinity Welcomes Careful Drivers`,
+  can identify the requested work under an alternate release title;
+- separate coauthor names, initials, HTML punctuation and common file/edition
+  labels are handled without requiring every coauthor to be listed;
+- cancelled downloads are identified as cancelled; available download error
+  messages are preserved.
 
-## Changed
+## API use and validation
 
-- full catalogue searches are cached and book pages can reuse metadata already
-  returned by search;
-- Libraseer reads both Shelfmark connections from saved settings with environment
-  variables as defaults;
-- documentation no longer presents the legacy Chaptarr API as the active
-  acquisition path.
+- cached public catalogue metadata is reused. A cache miss for a valid requested
+  ASIN may make one Audible product lookup; it does not run another indexer search;
+- each handoff still makes one Shelfmark release search with
+  `expand_search=false`, followed by at most one download submission;
+- the regression suite checks Red Dwarf collisions and the actual handoff,
+  alongside existing ebook, cache and fallback tests.
 
-## Safety
+## Upgrade and remaining limitations
 
-- Prowlarr audiobook fallback is never automatic and uses
-  `expand_search=false`;
-- only failed audiobook requests can invoke the fallback;
-- source/protocol matching remains strict: AudiobookBay uses torrents and the
-  Prowlarr fallback uses NZBs;
-- no database migration is required.
+- update Libraseer only; both Shelfmark services and their configuration can
+  remain unchanged. No database migration is required;
+- source/protocol rules and the manual-only Prowlarr fallback remain unchanged;
+- this fix does not resolve ebook candidates rejected by ebook matching, ebook
+  activity API timeouts, ABS listening-history authentication, or TorBox/WebDAV
+  files that remain invisible after TorBox reports readiness;
+- confirm one correct audiobook reaches the library after deployment. A passing
+  matcher test is not proof of a completed live download;
+- rollback by selecting the previous Libraseer image with the same `/config`.
 
 This remains an alpha for experienced self-hosters. Back up `/config` before
 upgrading and complete the clean-install checklist before treating a deployment
