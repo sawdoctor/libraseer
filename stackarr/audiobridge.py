@@ -5,15 +5,16 @@ do not need invasive changes. There is no bridge service.
 """
 from __future__ import annotations
 
-import html
 import logging
 import re
-import unicodedata
 from typing import Any
 
 import requests
 
 from . import audible, catalog_cache, config, db
+from .book_identity import (
+    _norm, _author_names, _author_matches, _wanted_titles, _release_title_key,
+)
 
 log = logging.getLogger("stackarr.audiobridge")
 _SEARCH_TIMEOUT = 180
@@ -101,106 +102,35 @@ def _session() -> requests.Session:
     return s
 
 
-def _norm(value: str) -> str:
-    value = unicodedata.normalize("NFKD", html.unescape(value or "").casefold())
-    value = "".join(ch for ch in value if not unicodedata.combining(ch))
-    return re.sub(r"[^a-z0-9]+", " ", value).strip()
-
-
-def _author_names(value: str) -> list[str]:
-    # A release may list only one of a book's coauthors. Keep people separate
-    # rather than treating "Rob Grant, Doug Naylor" as one four-word name.
-    return [name for part in re.split(r",|;|&|\band\b", html.unescape(value or ""), flags=re.I)
-            if (name := _norm(part))]
-
-
-def _name_variants(name: str) -> set[str]:
-    words = name.split()
-    variants = {name}
-    if len(words) >= 2:
-        variants.add(" ".join([words[0][0], *words[1:]]))
-        if all(len(word) == 1 for word in words[:-1]):
-            variants.add("".join(words[:-1]) + " " + words[-1])
-    return variants
-
-
-def _author_matches(wanted: str, evidence: str) -> bool:
-    evidence = " " + _norm(evidence) + " "
-    return any(" " + variant + " " in evidence
-               for name in _author_names(wanted) for variant in _name_variants(name))
-
-
-def _wanted_titles(title: str, subtitle: str = "") -> set[str]:
-    keys = {_norm(title)}
-    sub = _norm(subtitle)
-    if sub and sub not in keys:
-        keys.add(_norm(title + " " + subtitle))
-        # Distinctive catalogue subtitles sometimes serve as the release title.
-        # Generic labels such as "A Novel" must never become standalone aliases.
-        if len(sub.split()) >= 3 and not sub.startswith(("a novel", "book ", "the complete")):
-            keys.add(sub)
-    return keys - {""}
-
-
-_TITLE_METADATA = _AUDIO_FORMATS | {
-    "unabridged", "abridged", "audiobook", "audio", "retail", "audible", "eng", "english",
-}
-
-
-def _release_title_key(value: str, wanted: set[str], contributors: str) -> str:
-    """Remove explicit file/edition metadata, then compare the entire work title.
-
-    Extra bibliographic words stay significant: "Titan", "Better Than Life",
-    "Series V to VIII", and "BBC TV Soundtracks" cannot disappear in scoring.
-    """
-    value = html.unescape(value)
-    protected = set(" ".join(wanted).split())
-
-    def strip_note(match):
-        text = _norm(match.group(0))
-        words = text.split()
-        if text in wanted:
-            return match.group(0)
-        technical = _TITLE_METADATA | {"kbps", "khz", "bit", "stereo", "mono"}
-        if words and all(word in technical or word.isdigit() for word in words):
-            return " "
-        return match.group(0)
-
-    value = re.sub(r"\([^()]*\)|\[[^\[\]]*\]", strip_note, value)
-    # A suffix attached directly to a file format is an upload-group label.
-    value = re.sub(r"\b(mp3|m4b|m4a|aac|flac|ogg|opus)-(\w+)\b", r"\1", value, flags=re.I)
-    value = re.sub(r"\b\d+\s*(?:kbps|khz)\b", " ", value, flags=re.I)
-    key = _norm(value)
-    for name in _author_names(contributors):
-        for variant in sorted(_name_variants(name), key=len, reverse=True):
-            if any(variant in title for title in wanted):
-                continue
-            key = re.sub(r"(?<!\w)" + re.escape(variant) + r"(?!\w)", " ", key)
-    key = re.sub(r"\b(?:read by|narrated by)\b", " ", key)
-    words = [word for word in key.split() if word not in (_TITLE_METADATA - protected)]
-    while words and words[0] in {"by", "and"} and words[0] not in protected:
-        words.pop(0)
-    while words and words[-1] in {"by", "and"} and words[-1] not in protected:
-        words.pop()
-    return " ".join(words)
-
-
-def _catalog_identity(title: str, author: str, asin: str) -> dict:
+def _catalog_identity(title: str, author: str, asin: str, *, ebook: bool = False) -> dict:
     """Reuse public metadata; retries after restart may need one ASIN lookup.
 
     This never performs an indexer search or substitutes a catalogue search hit
     for the requested work. Stale or conflicting metadata cannot add aliases.
     """
-    if not re.fullmatch(r"[A-Z0-9]{10}", asin or "", flags=re.I):
+    is_asin = bool(re.fullmatch(r"[A-Z0-9]{10}", asin or "", flags=re.I))
+    is_ebook_id = ebook and bool(re.fullmatch(
+        r"(?:gb:[A-Za-z0-9_-]+|ol:/works/OL[0-9]+W)", asin or ""
+    ))
+    if not is_asin and not is_ebook_id:
         return {}
     metadata = catalog_cache.get_item(asin)
     if metadata is None:
-        metadata = audible.by_asin(asin) or {}
+        if is_ebook_id:
+            from . import ebookmeta
+            metadata = ebookmeta.by_id(asin) or {}
+        else:
+            metadata = audible.by_asin(asin) or {}
+    identity = metadata.get("id") if is_ebook_id else metadata.get("asin")
     if (_norm(metadata.get("title", "")) != _norm(title)
-            or (metadata.get("asin") and metadata["asin"] != asin)
+            or (identity and identity != asin)
             or (author and not _author_matches(author, metadata.get("author", "")))):
         return {}
-    catalog_cache.remember([dict(metadata, asin=asin, format="audiobook")])
+    # An ebook request can originate on an Audible book page. Keep that ASIN's
+    # catalogue type intact; the selected download format is a separate concern.
+    cached = dict(metadata, format="ebook" if is_ebook_id else "audiobook")
+    cached["id" if is_ebook_id else "asin"] = asin
+    catalog_cache.remember([cached])
     return metadata
 
 

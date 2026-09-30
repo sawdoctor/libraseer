@@ -22,6 +22,7 @@ from typing import Any
 import requests
 
 from . import config, db
+from .book_identity import _author_matches, _wanted_titles, _release_title_key, _norm as _identity_norm
 
 log = logging.getLogger("stackarr.shelfmark")
 
@@ -261,7 +262,48 @@ def _release_format(release: dict[str, Any]) -> str:
     return ""
 
 
-def _score_release(release: dict[str, Any], title: str, author: str) -> int | None:
+def _score_release(
+    release: dict[str, Any], title: str, author: str, *, subtitle: str = "",
+) -> int | None:
+    score = _legacy_score_release(release, title, author)
+    if score is not None:
+        return score
+
+    # A second identity check, not another search: handle verified contributor
+    # aliases and distinctive catalogue subtitles without weakening NZB/format
+    # rules or accepting unexplained bibliographic text.
+    import html
+    raw = html.unescape(str(release.get("title") or ""))
+    fmt = _release_format(release)
+    if (str(release.get("source") or "").strip().lower() != source()
+            or str(release.get("protocol") or "").strip().lower() != "nzb"
+            or fmt not in {"epub", "pdf"}
+            or explicit_foreign_language(raw, title)
+            or str(release.get("language") or "").strip().lower() not in {"", "en", "eng", "english"}
+            or set(_norm(raw).split()) & {"mp3", "m4b", "m4a", "aac", "audiobook", "audible"}):
+        return None
+    extra = release.get("extra")
+    release_author = str((extra.get("author") if isinstance(extra, dict) else None)
+                         or release.get("author") or "")
+    if not author or not _author_matches(author, release_author or raw):
+        return None
+    wanted = _wanted_titles(title, subtitle)
+    labels = {"epub", "pdf", "ebook", "retail", "eng", "english", "ocr", "scan", "scanned"}
+    key = _release_title_key(raw, wanted, ", ".join([author, release_author]), metadata_words=labels)
+    sub = _identity_norm(subtitle)
+    # A numbered series label is removable only alongside the entire validated
+    # distinctive subtitle: Red Dwarf 01 + Infinity Welcomes Careful Drivers.
+    # Red Dwarf 02 + Better Than Life still cannot identify the requested novel.
+    if sub and sub in wanted:
+        numbered = re.fullmatch(re.escape(_identity_norm(title)) + r" (?:book )?\d+ " + re.escape(sub), key)
+        if numbered:
+            key = _identity_norm(title + " " + subtitle)
+    if key not in wanted:
+        return None
+    return 180 + (30 if fmt == "epub" else 10)
+
+
+def _legacy_score_release(release: dict[str, Any], title: str, author: str) -> int | None:
     import html
 
     raw_release_title = str(release.get("title") or "")
@@ -631,6 +673,8 @@ def _choose_release(
     author: str,
     excluded_refs: set[str] | None = None,
     excluded_titles: set[str] | None = None,
+    *,
+    subtitle: str = "",
 ) -> tuple[dict[str, Any] | None, int]:
     ranked: list[tuple[int, int, dict[str, Any]]] = []
     excluded_refs = excluded_refs or set()
@@ -652,7 +696,7 @@ def _choose_release(
         if release_title_key and release_title_key in excluded_title_keys:
             continue
 
-        score = _score_release(release, title, author)
+        score = _score_release(release, title, author, subtitle=subtitle)
         if score is None or score < 0:
             continue
         ranked.append((score, -idx, release))
@@ -825,7 +869,7 @@ def add_and_search(
     excluded_titles: set[str] | None = None,
 ) -> dict[str, Any]:
     '''Search once, select one conservative NZB ebook release, queue it once.'''
-    del asin, root_folder_override
+    del root_folder_override
 
     if fmt != "ebook":
         return {
@@ -844,6 +888,8 @@ def add_and_search(
 
     try:
         session = _session()
+        from .audiobridge import _catalog_identity
+        metadata = _catalog_identity(title, author, asin, ebook=True)
 
         search_titles = [title]
         fallback_title = _fallback_search_title(title)
@@ -863,6 +909,7 @@ def add_and_search(
                 author,
                 excluded_refs=excluded_refs,
                 excluded_titles=excluded_titles,
+                subtitle=(metadata.get("subtitle") or "") if _norm(search_title) == _norm(title) else "",
             )
             searches.append((search_title, len(releases), candidate_count))
 

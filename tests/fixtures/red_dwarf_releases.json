@@ -1,0 +1,1004 @@
+{
+  "metadata": {
+    "title": "Red Dwarf",
+    "subtitle": "Infinity Welcomes Careful Drivers",
+    "author": "Rob Grant, Doug Naylor",
+    "narrator": "Chris Barrie"
+  },
+  "audiobook": [
+    {
+      "title": "Red Dwarf: Better Than Life",
+      "format": "m4b",
+      "source": "audiobookbay",
+      "protocol": "torrent",
+      "language": "en",
+      "content_type": "audiobook",
+      "extra": {
+        "title_raw": "Red Dwarf: Better Than Life - Grant Naylor",
+        "author": "Grant Naylor",
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "audiobook-0"
+    },
+    {
+      "title": "Red Dwarf: Titan",
+      "format": "m4b",
+      "source": "audiobookbay",
+      "protocol": "torrent",
+      "language": "en",
+      "content_type": "audiobook",
+      "extra": {
+        "title_raw": "Red Dwarf: Titan - Rob Grant, Andrew Marshall",
+        "author": "Rob Grant, Andrew Marshall",
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "audiobook-1"
+    },
+    {
+      "title": "Red Dwarf: Series V to VIII",
+      "format": "m4b",
+      "source": "audiobookbay",
+      "protocol": "torrent",
+      "language": "en",
+      "content_type": "audiobook",
+      "extra": {
+        "title_raw": "Red Dwarf: Series V to VIII - Rob Grant, Doug Naylor",
+        "author": "Rob Grant, Doug Naylor",
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "audiobook-2"
+    },
+    {
+      "title": "Red Dwarf: Series I to IV",
+      "format": "m4b",
+      "source": "audiobookbay",
+      "protocol": "torrent",
+      "language": "en",
+      "content_type": "audiobook",
+      "extra": {
+        "title_raw": "Red Dwarf: Series I to IV - Rob Grant, Doug Naylor",
+        "author": "Rob Grant, Doug Naylor",
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "audiobook-3"
+    },
+    {
+      "title": "The Red Dwarf Audiobooks and Radio Show",
+      "format": "m4b",
+      "source": "audiobookbay",
+      "protocol": "torrent",
+      "language": "en",
+      "content_type": "audiobook",
+      "extra": {
+        "title_raw": "The Red Dwarf Audiobooks and Radio Show - Grant Naylor, Doug Naylor, Rob Grant",
+        "author": "Grant Naylor, Doug Naylor, Rob Grant",
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "audiobook-4"
+    },
+    {
+      "title": "Red Dwarf: Infinity Welcomes Careful Drivers",
+      "format": "m4b",
+      "source": "audiobookbay",
+      "protocol": "torrent",
+      "language": "en",
+      "content_type": "audiobook",
+      "extra": {
+        "title_raw": "Red Dwarf: Infinity Welcomes Careful Drivers - Grant Naylor",
+        "author": "Grant Naylor",
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "audiobook-5"
+    },
+    {
+      "title": "Red Dwarf DVD Commentary Collection",
+      "format": "mp3",
+      "source": "audiobookbay",
+      "protocol": "torrent",
+      "language": "en",
+      "content_type": "audiobook",
+      "extra": {
+        "title_raw": "Red Dwarf DVD Commentary Collection - Various",
+        "author": "Various",
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "audiobook-6"
+    },
+    {
+      "title": "Red Dwarf 4 All Audiobooks",
+      "format": "mp3",
+      "source": "audiobookbay",
+      "protocol": "torrent",
+      "language": "en",
+      "content_type": "audiobook",
+      "extra": {
+        "title_raw": "Red Dwarf 4 All Audiobooks - Rob Grant and Doug Naylor",
+        "author": "Rob Grant and Doug Naylor",
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "audiobook-7"
+    },
+    {
+      "title": "Red Dwarf",
+      "format": null,
+      "source": "audiobookbay",
+      "protocol": "torrent",
+      "language": "en",
+      "content_type": "audiobook",
+      "extra": {
+        "title_raw": "Red Dwarf - Infinity Welcomes Careful Drivers",
+        "author": "Infinity Welcomes Careful Drivers",
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "audiobook-8"
+    }
+  ],
+  "ebook": [
+    {
+      "title": "Robert Llewellyn - The Man In the Rubber Mask- The Inside Smegging Story of Red Dwarf (retail) (epub)",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-0"
+    },
+    {
+      "title": "Leo deSouza - [The Eastern Dwarfs 01] - The Red Fields (epub)",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-1"
+    },
+    {
+      "title": "Naylor,.Grant-.Red.Dwarf.2-.Better.Than.Life",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-2"
+    },
+    {
+      "title": "Naylor,.Grant-.Red.Dwarf.1-.Infinity.Welcomes.Careful.Drivers",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-3"
+    },
+    {
+      "title": "New.Light.on.Dark.Stars.-.Red.Dwarfs.Low-Mass.Stars.Brown.Dwarfs.2nd.ed.-.I.Reid.S.Hawley.Springer.2005.REPOST-1",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-4"
+    },
+    {
+      "title": "Rob.Grant.-.Red.Dwarf.4.Last.Human.Doug.Naylor",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-5"
+    },
+    {
+      "title": "Rob.Grant.-.Red.Dwarf.3.Backwards",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-6"
+    },
+    {
+      "title": "Rob.Grant.-.Red.Dwarf.2.Better.Than.Life.Doug.Naylor",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-7"
+    },
+    {
+      "title": "Rob.Grant.-.Red.Dwarf.1.Infinity.Welcomes.Careful.Drivers.Doug.Naylor",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-8"
+    },
+    {
+      "title": "Red.Dwarf.04.-.Backwards.-.Rob.Grant.mobi",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-9"
+    },
+    {
+      "title": "Red.Dwarf.04.-.Backwards.-.Rob.Grant.epub",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-10"
+    },
+    {
+      "title": "Red.Dwarf.03.-.The.Last.Human.-.Doug.Naylor.epub",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-11"
+    },
+    {
+      "title": "Red.Dwarf.02.-.Better.Than.Life.-.Grant.Naylor.mobi",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-12"
+    },
+    {
+      "title": "Red.Dwarf.02.-.Better.Than.Life.-.Grant.Naylor.epub",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-13"
+    },
+    {
+      "title": "Red.Dwarf.01.-.Infinity.Welcomes.Careful.Drivers.-.Grant.Naylor.mobi",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-14"
+    },
+    {
+      "title": "Red.Dwarf.01.-.Infinity.Welcomes.Careful.Drivers.-.Grant.Naylor.epub",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-15"
+    },
+    {
+      "title": "New.Light.on.Dark.Stars.-.Red.Dwarfs.Low-Mass.Stars.Brown.Dwarfs.2nd.ed.-.I.Reid.S.Hawley.Springer.2005.REPOST",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-16"
+    },
+    {
+      "title": "New.Light.on.Dark.Stars.-.Red.Dwarfs.Low-Mass.Stars.Brown.Dwarfs.2nd.ed.-.I.Reid.S.Hawley.Springer.2005.WW-1",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-17"
+    },
+    {
+      "title": "Rob Grant - Red Dwarf - Backwards (epub)",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-18"
+    },
+    {
+      "title": "Rob Grant & Doug Naylor - [Red Dwarf 01] - Infinity Welcomes Careful Drivers (html)",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-19"
+    },
+    {
+      "title": "Rob Grant & Doug Naylor - [Red Dwarf 02] - Better Than Life (epub)",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-20"
+    },
+    {
+      "title": "Richard S Shaver - [Red Dwarf 02] - Erdis Cliff (epub)",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-21"
+    },
+    {
+      "title": "Richard S Shaver - [Red Dwarf 02] - Erdis Cliff (mobi)",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-22"
+    },
+    {
+      "title": "Richard S Shaver - [Red Dwarf 01] - Daughter of the Night (mobi)",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-23"
+    },
+    {
+      "title": "Richard S Shaver - [Red Dwarf 01] - Daughter of the Night (epub)",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-24"
+    },
+    {
+      "title": "Helen Gosney - [Red Rowan 04] - The Dwarf Moot (retail) (azw3)",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-25"
+    },
+    {
+      "title": "Robert Llewellyn - The Man In the Rubber Mask- The Inside Smegging Story of Red Dwarf (retail) (epub)",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-26"
+    },
+    {
+      "title": "Naylor, Grant- Red Dwarf 2- Better Than Life",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-27"
+    },
+    {
+      "title": "Naylor, Grant- Red Dwarf 1- Infinity Welcomes Careful Drivers",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-28"
+    },
+    {
+      "title": "Smegging Fantastic Red Dwarf Ebook Collection REBORN",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-29"
+    },
+    {
+      "title": "Rob Grant - Red Dwarf 4, Last Human (Doug Naylor)",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-30"
+    },
+    {
+      "title": "Rob Grant - Red Dwarf 3, Backwards",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-31"
+    },
+    {
+      "title": "Rob Grant - Red Dwarf 2, Better Than Life (& Doug Naylor)",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-32"
+    },
+    {
+      "title": "Rob Grant - Red Dwarf 1, Infinity Welcomes Careful Drivers (& Doug Naylor)",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-33"
+    },
+    {
+      "title": "Red Dwarf 04 - Backwards - Rob Grant (mobi)",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-34"
+    },
+    {
+      "title": "Red Dwarf 04 - Backwards - Rob Grant (epub)",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-35"
+    },
+    {
+      "title": "Red Dwarf 03 - The Last Human - Doug Naylor (mobi)",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-36"
+    },
+    {
+      "title": "Red Dwarf 03 - The Last Human - Doug Naylor (epub)",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-37"
+    },
+    {
+      "title": "Red Dwarf 02 - Better Than Life - Grant Naylor (mobi)",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-38"
+    },
+    {
+      "title": "Red Dwarf 02 - Better Than Life - Grant Naylor (epub)",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-39"
+    },
+    {
+      "title": "Red Dwarf 01 - Infinity Welcomes Careful Drivers - Grant Naylor (mobi)",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-40"
+    },
+    {
+      "title": "Red Dwarf 01 - Infinity Welcomes Careful Drivers - Grant Naylor (epub)",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-41"
+    },
+    {
+      "title": "Rob.Grant.&amp;.Andrew.Marshall.-.Red.Dwarf-.Titan.(2026)",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-42"
+    },
+    {
+      "title": "Helen Gosney - [Red Rowan 04] - The Dwarf Moot (retail) (azw3)",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-43"
+    },
+    {
+      "title": "Robert Llewellyn - The Man In the Rubber Mask- The Inside Smegging Story of Red Dwarf (retail) (epub)",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-44"
+    },
+    {
+      "title": "Naylor, Grant- Red Dwarf 2- Better Than Life",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-45"
+    },
+    {
+      "title": "Naylor, Grant- Red Dwarf 1- Infinity Welcomes Careful Drivers",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-46"
+    },
+    {
+      "title": "Red Dwarf 02 - Better Than Life - Grant Naylor (epub)",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-47"
+    },
+    {
+      "title": "Red Dwarf 01 - Infinity Welcomes Careful Drivers - Grant Naylor (mobi)",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-48"
+    },
+    {
+      "title": "Red Dwarf 04 - Backwards - Rob Grant (mobi)",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-49"
+    },
+    {
+      "title": "Red Dwarf 03 - The Last Human - Doug Naylor (mobi)",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-50"
+    },
+    {
+      "title": "Red Dwarf 01 - Infinity Welcomes Careful Drivers - Grant Naylor (epub)",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-51"
+    },
+    {
+      "title": "Grant Naylor - Red Dwarf",
+      "format": null,
+      "source": "prowlarr",
+      "protocol": "nzb",
+      "language": null,
+      "content_type": "book",
+      "extra": {
+        "title_raw": null,
+        "author": null,
+        "format": null,
+        "formats": null,
+        "formats_display": null
+      },
+      "source_id": "ebook-52"
+    }
+  ]
+}

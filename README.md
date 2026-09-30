@@ -35,6 +35,9 @@ yourself. Libraseer does not conceal an unpublished bridge or bundled indexer.
 - catalogue subtitles identify alternate release titles, with cached metadata
   reused and at most one ASIN lookup when needed;
 - separate coauthor names and common file/edition labels are supported;
+- verified joint pen names are supported, including Grant Naylor; ebook
+  matching recognises validated distinctive subtitles with numbered series
+  labels while keeping the NZB EPUB/PDF rules;
 - cancelled Shelfmark downloads are reported explicitly.
 
 Alpha 7 also added:
