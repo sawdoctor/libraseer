@@ -128,14 +128,15 @@ def health() -> list[dict[str, str]]:
     if not configured():
         return [{"type": "error", "message": "Shelfmark ebook URL is not configured."}]
     try:
-        r = requests.get(f"{url()}/api/health", timeout=15)
+        session = _session()
+        r = session.get(f"{url()}/api/health", timeout=15)
         if r.ok:
             return []
         return [{
             "type": "error",
             "message": f"Shelfmark ebook health check returned HTTP {r.status_code}.",
         }]
-    except requests.RequestException as exc:
+    except (requests.RequestException, ShelfmarkError) as exc:
         return [{"type": "error", "message": f"Shelfmark ebook is unreachable: {exc}"}]
 
 

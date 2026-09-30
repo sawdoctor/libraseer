@@ -1,13 +1,13 @@
 # Security
 
-Stackarr is a small self-hosted app intended to run on your private network
-(or behind a reverse proxy you control), alongside Audiobookshelf and Chaptarr.
+Libraseer is a small self-hosted app intended to run on your private network
+(or behind a reverse proxy you control), alongside Audiobookshelf and Shelfmark.
 
 ## Model
 
-- **Auth** is delegated to Audiobookshelf — users sign in with their own ABS
-  credentials; Stackarr verifies via the ABS `/login` API and stores the
-  returned ABS token (to read that user's history). Stackarr never stores ABS
+- **Auth** can be delegated to Audiobookshelf — users sign in with their own ABS
+  credentials; Libraseer verifies via the ABS `/login` API and stores the
+  returned ABS token (to read that user's history). Libraseer never stores ABS
   passwords. Tokens are kept in the SQLite DB under `/config` — protect that
   volume.
 - **Sessions** are Flask signed cookies (random per-install secret), `HttpOnly`,
@@ -16,7 +16,7 @@ Stackarr is a small self-hosted app intended to run on your private network
 - **Framing/clickjacking:** embedding is restricted to the app's own origin by
   default. To embed in nzb360/a dashboard, set `STACKARR_FRAME_ANCESTORS` to that
   origin (or `*` to allow anywhere — not recommended).
-- **Admin:** server-wide reads use `ABS_ADMIN_TOKEN`. Stackarr admins are listed
+- **Admin:** server-wide reads use `ABS_ADMIN_TOKEN`. Libraseer admins are listed
   in `STACKARR_ADMINS`. Instance-wide integration settings (SMTP, service
   connections, and the shared reading-list tokens — Hardcover / Goodreads) are
   visible and editable to admins only; regular users see only their own
@@ -33,8 +33,9 @@ Stackarr is a small self-hosted app intended to run on your private network
 
 - Put it behind HTTPS (reverse proxy) and set `STACKARR_HTTPS=true`.
 - Keep `STACKARR_FRAME_ANCESTORS` at the default unless you need embedding.
-- Anyone with an account on your Audiobookshelf can sign in and request books
-  (handed to Chaptarr). Only expose it to people you'd give that to.
+- Anyone with an allowed Libraseer/Audiobookshelf account can request books
+  through the configured Shelfmark services. Only expose it to people you trust
+  with that capability.
 
 ## Reporting
 

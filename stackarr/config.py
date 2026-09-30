@@ -2,7 +2,7 @@
 deploys anywhere with no code edits. Single source of truth for settings."""
 import os
 
-VERSION = "0.1.0-alpha.6"
+VERSION = "0.1.0-alpha.7"
 RELEASE_STAGE = "alpha"
 
 
@@ -75,10 +75,12 @@ SHELFMARK_AUDIOBOOK_URL = os.environ.get("SHELFMARK_AUDIOBOOK_URL", "").rstrip("
 SHELFMARK_AUDIOBOOK_USERNAME = os.environ.get("SHELFMARK_AUDIOBOOK_USERNAME", "")
 SHELFMARK_AUDIOBOOK_PASSWORD = os.environ.get("SHELFMARK_AUDIOBOOK_PASSWORD", "")
 SHELFMARK_AUDIOBOOK_SOURCE = os.environ.get("SHELFMARK_AUDIOBOOK_SOURCE", "audiobookbay").strip().lower()
+SHELFMARK_AUDIOBOOK_FALLBACK_SOURCE = os.environ.get(
+    "SHELFMARK_AUDIOBOOK_FALLBACK_SOURCE", "prowlarr"
+).strip().lower()
 
 # --- Shelfmark ebook handoff -------------------------------------------------
-# This branch deliberately sends ONLY ebook requests to a separate Shelfmark.
-# AudiobookRequest / abr-shelfmark-bridge / shelfmark-torbox are untouched.
+# eBook requests are sent only to the separate official Shelfmark deployment.
 SHELFMARK_EBOOK_URL = os.environ.get("SHELFMARK_EBOOK_URL", "").rstrip("/")
 SHELFMARK_EBOOK_USERNAME = os.environ.get("SHELFMARK_EBOOK_USERNAME", "")
 SHELFMARK_EBOOK_PASSWORD = os.environ.get("SHELFMARK_EBOOK_PASSWORD", "")

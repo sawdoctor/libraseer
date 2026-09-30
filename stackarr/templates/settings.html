@@ -160,19 +160,30 @@
         <div class="conn-actions"><button class="btn small ghost" onclick="Stackarr.testConn('abs', this)">Test</button>
           <span class="conn-result" id="test-abs"></span></div>
       </div>
-      <div class="panel"><h3>Shelfmark</h3>
-        <label class="row"><span>URL</span><input data-setting="chaptarr_url" value="{{ conn.chaptarr_url }}"></label>
-        <label class="row"><span>API key</span><input type="password" data-setting="chaptarr_api_key" value="{{ conn.chaptarr_api_key }}"></label>
-        <label class="row"><span>Root folder</span><input data-setting="chaptarr_root_folder" value="{{ conn.chaptarr_root_folder }}"></label>
-        <label class="row"><span>Quality profile id</span><input type="number" data-setting="chaptarr_quality_profile_id" value="{{ conn.chaptarr_quality_profile_id }}"></label>
-        <label class="row"><span>Metadata profile id</span><input type="number" data-setting="chaptarr_metadata_profile_id" value="{{ conn.chaptarr_metadata_profile_id }}"></label>
-        <div class="conn-actions"><button class="btn small ghost" onclick="Stackarr.testConn('chaptarr', this)">Test</button>
-          <span class="conn-result" id="test-chaptarr"></span></div>
-        <p class="muted" style="margin-top:12px">Optional — real-time status: in <b>Shelfmark → Settings → Connect → + → Webhook</b>,
-          set the URL below (triggers: On Grab, On Import). Libraseer then flips requests to Available the moment Shelfmark imports them.</p>
-        <label class="row"><span>Webhook URL</span><input readonly onclick="this.select()"
-          value="{{ (conn.public_url or 'http://YOUR-LIBRASEER-HOST:8484') }}/api/webhook/chaptarr?token={{ conn.chaptarr_webhook_token }}"></label>
+      {% if show_ebook %}
+      <div class="panel"><h3>Shelfmark eBooks <span class="format-chip ebook">eBooks</span></h3>
+        <p class="muted">The official Shelfmark instance used for Prowlarr/Usenet eBook acquisition.</p>
+        <label class="row"><span>URL</span><input data-setting="shelfmark_ebook_url" value="{{ conn.shelfmark_ebook_url }}" placeholder="http://shelfmark-ebooks:8084"></label>
+        <label class="row"><span>Username</span><input data-setting="shelfmark_ebook_username" value="{{ conn.shelfmark_ebook_username }}"></label>
+        <label class="row"><span>Password</span><input type="password" data-setting="shelfmark_ebook_password" value="{{ conn.shelfmark_ebook_password }}"></label>
+        <label class="row"><span>Release source</span><input data-setting="shelfmark_ebook_source" value="{{ conn.shelfmark_ebook_source }}" placeholder="prowlarr"></label>
+        <div class="conn-actions"><button class="btn small ghost" onclick="Stackarr.testConn('shelfmark_ebook', this)">Test</button>
+          <span class="conn-result" id="test-shelfmark_ebook"></span></div>
       </div>
+      {% endif %}
+
+      {% if show_audio %}
+      <div class="panel"><h3>Shelfmark-TorBox <span class="format-chip audiobook">Audiobooks</span></h3>
+        <p class="muted">AudiobookBay is searched normally. Prowlarr is used only when a person presses the fallback button on a failed request.</p>
+        <label class="row"><span>URL</span><input data-setting="shelfmark_audiobook_url" value="{{ conn.shelfmark_audiobook_url }}" placeholder="http://shelfmark-torbox:8084"></label>
+        <label class="row"><span>Username</span><input data-setting="shelfmark_audiobook_username" value="{{ conn.shelfmark_audiobook_username }}"></label>
+        <label class="row"><span>Password</span><input type="password" data-setting="shelfmark_audiobook_password" value="{{ conn.shelfmark_audiobook_password }}"></label>
+        <label class="row"><span>Primary source</span><input data-setting="shelfmark_audiobook_source" value="{{ conn.shelfmark_audiobook_source }}" placeholder="audiobookbay"></label>
+        <label class="row"><span>Manual fallback source</span><input data-setting="shelfmark_audiobook_fallback_source" value="{{ conn.shelfmark_audiobook_fallback_source }}" placeholder="prowlarr"></label>
+        <div class="conn-actions"><button class="btn small ghost" onclick="Stackarr.testConn('shelfmark_audiobook', this)">Test</button>
+          <span class="conn-result" id="test-shelfmark_audiobook"></span></div>
+      </div>
+      {% endif %}
 
       {% if show_ebook %}
       <div class="panel"><h3>Kavita <span class="format-chip ebook">eBooks</span></h3>
@@ -217,7 +228,7 @@
       <div class="panel"><h3>KOReader sync <span class="warn-note" style="display:inline-block;margin:0;padding:2px 8px">experimental</span></h3>
         <label class="row"><span>Accept progress sync from KOReader</span>
           <input type="checkbox" class="switch" {{ 'checked' if koreader_sync }} onchange="Stackarr.setSetting({koreader_sync: this.checked})"></label>
-        <p class="muted">Point KOReader's sync server at this Stackarr. Note: KOReader only syncs a file hash, not titles, so it can't
+        <p class="muted">Point KOReader's sync server at this Libraseer instance. Note: KOReader only syncs a file hash, not titles, so it can't
           inform recommendations — it's a progress relay only.</p>
       </div>
       {% endif %}

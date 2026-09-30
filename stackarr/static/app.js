@@ -569,6 +569,13 @@ const Stackarr = (() => {
     },
     async markReadBook(book, btn) { btn.disabled = true; const r = await api("/api/mark-read", { method: "POST", body: JSON.stringify(book) }); if (r && r.ok) toast(`Noted “${r.matched}” as read.`); },
     async retry(id) { const r = await api(`/api/request/${id}/retry`, { method: "POST" }); if (r) location.reload(); },
+    async tryProwlarr(id, btn) {
+      if (btn) { btn.disabled = true; btn.textContent = "Searching Prowlarr…"; }
+      const r = await api(`/api/request/${id}/prowlarr-fallback`, { method: "POST" });
+      if (r) toast(r.detail || (r.ok ? "Queued through Prowlarr." : "No acceptable Usenet release found."));
+      if (r && r.ok) return setTimeout(() => location.reload(), 500);
+      if (btn) { btn.disabled = false; btn.textContent = "Try Prowlarr / Usenet"; }
+    },
     async removeRequest(id) { await api(`/api/request/${id}`, { method: "DELETE" }); document.querySelector(`.req-row[data-id="${id}"]`)?.remove(); },
     async approveRequest(id, btn) {
       if (btn) btn.disabled = true;

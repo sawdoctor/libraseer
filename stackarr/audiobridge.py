@@ -6,11 +6,12 @@ do not need invasive changes. There is no bridge service.
 from __future__ import annotations
 
 import logging
-import os
 import re
 from typing import Any
 
 import requests
+
+from . import config, db
 
 log = logging.getLogger("stackarr.audiobridge")
 _SEARCH_TIMEOUT = 180
@@ -23,24 +24,45 @@ class AudiobookShelfmarkError(RuntimeError):
 
 
 def url() -> str:
-    return os.environ.get("SHELFMARK_AUDIOBOOK_URL", "").rstrip("/")
+    return db.setting("shelfmark_audiobook_url", config.SHELFMARK_AUDIOBOOK_URL).rstrip("/")
 
 
 def username() -> str:
-    return os.environ.get("SHELFMARK_AUDIOBOOK_USERNAME", "")
+    return db.setting("shelfmark_audiobook_username", config.SHELFMARK_AUDIOBOOK_USERNAME)
 
 
 def password() -> str:
-    return os.environ.get("SHELFMARK_AUDIOBOOK_PASSWORD", "")
+    return db.setting("shelfmark_audiobook_password", config.SHELFMARK_AUDIOBOOK_PASSWORD)
 
 
 def source() -> str:
-    return (os.environ.get("SHELFMARK_AUDIOBOOK_SOURCE", "audiobookbay").strip().lower()
-            or "audiobookbay")
+    value = db.setting("shelfmark_audiobook_source", config.SHELFMARK_AUDIOBOOK_SOURCE)
+    return (value or "audiobookbay").strip().lower()
+
+
+def fallback_source() -> str:
+    value = db.setting(
+        "shelfmark_audiobook_fallback_source",
+        config.SHELFMARK_AUDIOBOOK_FALLBACK_SOURCE,
+    )
+    return (value or "prowlarr").strip().lower()
 
 
 def configured() -> bool:
     return bool(url())
+
+
+def health() -> list[dict[str, str]]:
+    if not configured():
+        return [{"type": "error", "message": "Shelfmark-TorBox URL is not configured."}]
+    try:
+        session = _session()
+        r = session.get(f"{url()}/api/health", timeout=15)
+        if r.ok:
+            return []
+        return [{"type": "error", "message": f"Shelfmark-TorBox health check returned HTTP {r.status_code}."}]
+    except (requests.RequestException, AudiobookShelfmarkError) as exc:
+        return [{"type": "error", "message": f"Shelfmark-TorBox is unreachable: {exc}"}]
 
 
 def _session() -> requests.Session:
@@ -98,10 +120,17 @@ def _format_hints(release: dict[str, Any]) -> set[str]:
     return {t for t in re.split(r"[^a-z0-9]+", " ".join(values).lower()) if t}
 
 
-def _score_release(release: dict[str, Any], title: str, author: str) -> int | None:
-    if str(release.get("source") or "").strip().lower() != source():
+def _score_release(
+    release: dict[str, Any],
+    title: str,
+    author: str,
+    source_name: str | None = None,
+) -> int | None:
+    selected_source = (source_name or source()).strip().lower()
+    if str(release.get("source") or "").strip().lower() != selected_source:
         return None
-    if str(release.get("protocol") or "").strip().lower() != "torrent":
+    expected_protocol = "nzb" if selected_source == "prowlarr" else "torrent"
+    if str(release.get("protocol") or "").strip().lower() != expected_protocol:
         return None
     content_type = str(release.get("content_type") or "").strip().lower()
     if content_type and content_type != "audiobook":
@@ -144,12 +173,17 @@ def _score_release(release: dict[str, Any], title: str, author: str) -> int | No
     return score if score >= 0 else None
 
 
-def _choose_release(releases: list[dict[str, Any]], title: str, author: str):
+def _choose_release(
+    releases: list[dict[str, Any]],
+    title: str,
+    author: str,
+    source_name: str | None = None,
+):
     ranked = []
     for idx, release in enumerate(releases):
         if not isinstance(release, dict):
             continue
-        score = _score_release(release, title, author)
+        score = _score_release(release, title, author, source_name=source_name)
         if score is not None:
             ranked.append((score, -idx, release))
     if not ranked:
@@ -158,11 +192,17 @@ def _choose_release(releases: list[dict[str, Any]], title: str, author: str):
     return ranked[0][2], len(ranked)
 
 
-def _search_once(session: requests.Session, title: str, author: str) -> list[dict[str, Any]]:
+def _search_once(
+    session: requests.Session,
+    title: str,
+    author: str,
+    source_name: str | None = None,
+) -> list[dict[str, Any]]:
+    selected_source = (source_name or source()).strip().lower()
     params = {
         "provider": "manual",
         "book_id": f"libraseer:{title}",
-        "source": source(),
+        "source": selected_source,
         "title": title,
         "author": author,
         "manual_query": title,
@@ -177,7 +217,7 @@ def _search_once(session: requests.Session, title: str, author: str) -> list[dic
     if r.status_code in (401, 403):
         raise AudiobookShelfmarkError("Shelfmark-TorBox rejected this session.")
     if r.status_code == 429:
-        raise AudiobookShelfmarkError("Shelfmark-TorBox/AudiobookBay is rate-limited.")
+        raise AudiobookShelfmarkError(f"Shelfmark-TorBox/{selected_source} is rate-limited.")
     if not r.ok:
         detail = ""
         try:
@@ -284,7 +324,12 @@ def job_status(ref: str) -> dict | None:
     return {"status": "monitoring", "error": ""}
 
 
-def add_and_search(title: str, author: str, asin: str = "") -> dict:
+def add_and_search(
+    title: str,
+    author: str,
+    asin: str = "",
+    source_name: str | None = None,
+) -> dict:
     del asin  # direct Shelfmark handoff does not require an Audible ASIN.
     title = (title or "").strip()
     author = (author or "").strip()
@@ -293,14 +338,17 @@ def add_and_search(title: str, author: str, asin: str = "") -> dict:
 
     try:
         session = _session()
-        releases = _search_once(session, title, author)
-        chosen, candidates = _choose_release(releases, title, author)
+        selected_source = (source_name or source()).strip().lower()
+        releases = _search_once(session, title, author, source_name=selected_source)
+        chosen, candidates = _choose_release(
+            releases, title, author, source_name=selected_source
+        )
         if chosen is None:
             return {
                 "ok": False,
                 "detail": (
                     f"Shelfmark-TorBox found {len(releases)} release(s), but none passed "
-                    "the conservative single-audiobook torrent checks. Nothing was queued."
+                    f"the conservative single-audiobook {selected_source} checks. Nothing was queued."
                 ),
             }
 
@@ -320,7 +368,7 @@ def add_and_search(title: str, author: str, asin: str = "") -> dict:
         return {
             "ok": True,
             "ref": ref,
-            "detail": f"Queued one audiobook torrent through Shelfmark-TorBox: {picked}",
+            "detail": f"Queued one audiobook through Shelfmark-TorBox/{selected_source}: {picked}",
         }
     except AudiobookShelfmarkError as exc:
         log.warning("direct audiobook handoff failed for %r: %s", title, exc)

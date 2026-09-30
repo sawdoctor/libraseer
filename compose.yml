@@ -1,0 +1,12 @@
+services:
+  libraseer:
+    image: ${LIBRASEER_IMAGE:-ghcr.io/sawdoctor/libraseer:v0.1.0-alpha.7}
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "${LIBRASEER_PORT:-8484}:8484"
+    volumes:
+      - ${LIBRASEER_DATA_DIR:-./data}:/config
+    extra_hosts:
+      - host.docker.internal:host-gateway

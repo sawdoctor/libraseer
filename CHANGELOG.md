@@ -1,6 +1,16 @@
 # Changelog
 
-All notable changes to Stackarr.
+All notable changes to Libraseer. Entries before `0.1.0-alpha.1` describe the
+inherited Stackarr baseline.
+
+## [0.1.0-alpha.7] - 2026-09-30
+
+- Added local-first typeahead and lightweight catalogue/item caching.
+- Added separate eBook and audiobook Shelfmark settings and connection tests.
+- Added an explicit, rate-conscious Prowlarr/Usenet fallback for failed
+  audiobook requests.
+- Replaced stale Chaptarr installation guidance with the current direct
+  Shelfmark architecture and a portable Compose example.
 
 ## [1.6.8] - 2026-07-04
 
